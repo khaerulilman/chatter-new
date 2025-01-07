@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+    font-family: "Fredoka", sans-serif;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Hides scrollbar on Chrome, Safari, Edge */
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* Hides scrollbar on IE and Edge */
+    scrollbar-width: none;     /* Hides scrollbar on Firefox */
+  }
+
+.border-l-none {
+  border-left: none;
+}
