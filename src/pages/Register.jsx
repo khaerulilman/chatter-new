@@ -16,7 +16,7 @@ export default function Register() {
 
     try {
       const response = await axios.post(
-        "https://chatter-imagekit-frmxr41wo-khaerulilmans-projects.vercel.app/api/auth/register",
+        `${import.meta.env.VITE_API_URL}/auth/register`,
         {
           name,
           email,
@@ -24,13 +24,13 @@ export default function Register() {
         },
         {
           headers: {
-            'Content-Type': 'application/json',
-          }
+            "Content-Type": "application/json",
+          },
         }
       );
 
       console.log(`Otp success: ${response.data}`);
-      localStorage.setItem('registeredEmail', email);
+      localStorage.setItem("registeredEmail", email);
       navigate("/otp");
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -43,10 +43,7 @@ export default function Register() {
     <>
       <section className="h-screen bg-gray-950 flex items-center justify-center">
         <div className="w-full max-w-md p-6 rounded-lg shadow-lg">
-          <form
-            onSubmit={handleRegister}
-            className="flex flex-col gap-4"
-          >
+          <form onSubmit={handleRegister} className="flex flex-col gap-4">
             <h3 className="text-4xl text-left text-white mb-6">Register</h3>
             <Input
               icon="fa-solid fa-user"
@@ -70,7 +67,7 @@ export default function Register() {
               onChange={(e) => setPassword(e.target.value)}
             />
             {error && <p className="text-red-500">{error}</p>}
-            <ButtonRegister name={"Sign Up"} type='submit' />
+            <ButtonRegister name={"Sign Up"} type="submit" />
           </form>
         </div>
       </section>

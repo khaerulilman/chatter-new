@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import EmojiPicker from "emoji-picker-react";
-import { useUser } from '../UserContext';
-import { usePosts } from '../PostsContext';
+import { useUser } from "../UserContext";
+import { usePosts } from "../PostsContext";
 
 export default function NewPost() {
   const { user } = useUser();
@@ -24,9 +24,16 @@ export default function NewPost() {
     const file = e.target.files[0];
     if (!file) return;
 
-    const supportedTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4'];
+    const supportedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "video/mp4",
+    ];
     if (!supportedTypes.includes(file.type)) {
-      alert("Format file tidak didukung. Gunakan gambar (jpeg, png, gif) atau video (mp4).");
+      alert(
+        "Format file tidak didukung. Gunakan gambar (jpeg, png, gif) atau video (mp4)."
+      );
       return;
     }
 
@@ -57,37 +64,40 @@ export default function NewPost() {
       alert("Silakan login terlebih dahulu");
       return;
     }
-  
+
     if (!postContent.trim() && !fileImage) {
       alert("Silakan tambahkan konten atau gambar untuk post Anda");
       return;
     }
-  
+
     setIsSubmitting(true);
-  
+
     try {
       const formData = new FormData();
-      formData.append('content', postContent.trim());
-      formData.append('userId', user.id);  // Menambahkan userId ke dalam FormData
-  
+      formData.append("content", postContent.trim()); // Hanya kirim content
+
       if (fileImage) {
-        formData.append('media', fileImage);  // Menambahkan file media jika ada
+        formData.append("media", fileImage); // Menambahkan file media jika ada
       }
-  
-      const response = await fetch('https://chatter-imagekit-frmxr41wo-khaerulilmans-projects.vercel.app/api/auth/create-post', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${user.token}`  // Menambahkan header Authorization dengan token Bearer
-        },
-        body: formData,
-      });
-  
+
+      const response = await fetch(
+        "http://localhost:3000/api/auth/create-post",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${user.token}`, // Menambahkan header Authorization dengan token Bearer
+          },
+          body: formData,
+        }
+      );
+
       const data = await response.json();
-  
+
       if (!response.ok) {
-        throw new Error(data.message || 'Gagal membuat post');
+        throw new Error(data.message || "Gagal membuat post");
       }
-  
+
+      // Menambahkan post ke context
       addPost({
         id: data.post.id,
         content: data.post.content,
@@ -96,13 +106,13 @@ export default function NewPost() {
         user_id: user.id,
         profile_picture: user.profile_picture,
         created_at: new Date().toISOString(),
-        likes: 0
+        likes: 0,
       });
-  
+
       resetForm();
       alert("Post berhasil dibuat!");
-  
-      window.location.reload();  // Reload untuk melihat post baru
+
+      window.location.reload(); // Reload untuk melihat post baru
     } catch (error) {
       console.error("Error saat membuat post:", error);
       alert(error.message || "Terjadi kesalahan saat membuat post");
@@ -110,7 +120,6 @@ export default function NewPost() {
       setIsSubmitting(false);
     }
   };
-  
 
   const removeImage = () => {
     setFileImage(null);
@@ -138,7 +147,6 @@ export default function NewPost() {
           </div>
           <div className="flex flex-col text-gray-400">
             <p className="text-white">{user?.name || "Guest"}</p>
-            <p className="text-sm">{user?.id || "ID not available"}</p>
           </div>
         </div>
         <button className="text-gray-400">
@@ -207,10 +215,12 @@ export default function NewPost() {
 
         {showEmojiPicker && (
           <div className="absolute z-10 mt-20">
-            <EmojiPicker onEmojiClick={(emojiData) => {
-              setPostContent(prev => prev + emojiData.emoji);
-              setShowEmojiPicker(false);
-            }} />
+            <EmojiPicker
+              onEmojiClick={(emojiData) => {
+                setPostContent((prev) => prev + emojiData.emoji);
+                setShowEmojiPicker(false);
+              }}
+            />
           </div>
         )}
       </div>

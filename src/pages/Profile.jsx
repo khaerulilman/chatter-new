@@ -72,7 +72,10 @@ export default function Profile() {
                 <div className="h-auto rounded-lg mx-6 -mt-12 flex flex-col justify-between">
                   <div className="flex justify-between">
                     <img
-                      src={user?.profile_picture || "https://ik.imagekit.io/fs0yie8l6/images%20(13).jpg?updatedAt=1736213176171"} // Default profile picture
+                      src={
+                        user?.profile_picture ||
+                        "https://ik.imagekit.io/fs0yie8l6/images%20(13).jpg?updatedAt=1736213176171"
+                      } // Default profile picture
                       alt="Profile"
                       className="flex w-24 h-full object-cover rounded-lg"
                     />
@@ -88,7 +91,6 @@ export default function Profile() {
                     {user ? (
                       <>
                         <h3 className="font-medium text-xl">{user.name}</h3>
-                        <p className="text-gray-400">@{user.id}</p>
                       </>
                     ) : (
                       <p>Loading...</p>
@@ -137,4 +139,3 @@ export default function Profile() {
     </>
   );
 }
-

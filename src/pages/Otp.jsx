@@ -22,15 +22,16 @@ export default function Otp() {
     e.preventDefault();
 
     try {
-      const response = await axios.post("https://chatter-imagekit-frmxr41wo-khaerulilmans-projects.vercel.app/api/auth/verify-otp",
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/auth/verify-otp`,
         {
           email,
-          otp
+          otp,
         },
         {
           headers: {
-            'Content-Type': 'application/json',
-          }
+            "Content-Type": "application/json",
+          },
         }
       );
       console.log("Otp Success verified: ", response.data);

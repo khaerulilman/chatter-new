@@ -14,42 +14,33 @@ export default function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    
+
     try {
-      const response = await fetch('https://chatter-imagekit-frmxr41wo-khaerulilmans-projects.vercel.app/api/auth/login', {
-        method: 'POST',
-  
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/auth/login`,
+        { email, password }
+      );
+
+      const result = response.data;
+
+      // Simpan user data beserta token
+      setUser({
+        id: result.data.id,
+        name: result.data.name,
+        email: result.data.email,
+        profile_picture: result.data.profile_picture,
+        header_picture: result.data.header_picture,
+        created_at: result.data.created_at,
+        token: result.token,
       });
-  
-      const result = await response.json();
-  
-      if (response.ok) {
-        // Simpan user data beserta token
-        setUser({
-          id: result.data.id,
-          name: result.data.name,
-          email: result.data.email,
-          profile_picture: result.data.profile_picture,
-          header_picture: result.data.header_picture,
-          created_at: result.data.created_at,
-          token: result.token  
-        });
-        
-        // Redirect ke halaman utama
-        navigate('/home');
-      } else {
-        setError(result.message);
-      }
+
+      // Redirect ke halaman utama
+      navigate("/home");
     } catch (error) {
-      console.error('Login error:', error);
-      setError('Terjadi kesalahan saat login');
+      console.error("Login error:", error);
+      setError(error.response?.data?.message || "Terjadi kesalahan saat login");
     }
   };
-  
 
   return (
     <section className="h-screen bg-gray-950 flex items-center justify-center">

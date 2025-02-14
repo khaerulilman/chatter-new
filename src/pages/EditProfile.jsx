@@ -33,43 +33,47 @@ export default function EditProfile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     // Pastikan user dan token tersedia
     if (!user || !user.token) {
       setError("User not authenticated. Please login again.");
       navigate("/login");
       return;
     }
-  
+
     // Validasi tipe file
     if (
       profilePicture &&
-      !["image/png", "image/jpeg", "image/gif", "image/webp"].includes(profilePicture.type)
+      !["image/png", "image/jpeg", "image/gif", "image/webp"].includes(
+        profilePicture.type
+      )
     ) {
       setError("Invalid file type for profile picture.");
       return;
     }
-  
+
     if (
       headerPicture &&
-      !["image/png", "image/jpeg", "image/gif", "image/webp"].includes(headerPicture.type)
+      !["image/png", "image/jpeg", "image/gif", "image/webp"].includes(
+        headerPicture.type
+      )
     ) {
       setError("Invalid file type for header picture.");
       return;
     }
-  
+
     try {
       const formData = new FormData();
-      
+
       // Hanya tambahkan field yang diubah
       if (id !== user.id) formData.append("id", id);
       if (name !== user.name) formData.append("name", name);
       if (password) formData.append("password", password);
       if (profilePicture) formData.append("profile_picture", profilePicture);
       if (headerPicture) formData.append("header_picture", headerPicture);
-  
-      const response = await axios.put(
-        "https://chatter-imagekit-frmxr41wo-khaerulilmans-projects.vercel.app/api/auth/edit-profile",
+
+      const response = await axios.post(
+        "http://localhost:3000/api/auth/edit-profile",
         formData,
         {
           headers: {
@@ -78,20 +82,21 @@ export default function EditProfile() {
           },
         }
       );
-  
+
       // Update user context dengan data dari response
-      setUser(prevUser => ({
+      setUser((prevUser) => ({
         ...prevUser,
         ...(response.data.data || {}),
-        token: response.data.token || prevUser.token
+        token: response.data.token || prevUser.token,
       }));
-  
+
       alert("Profile updated successfully!");
       navigate("/");
     } catch (error) {
       console.error("Error updating profile:", error);
       setError(
-        error.response?.data?.error || "An error occurred while updating the profile."
+        error.response?.data?.error ||
+          "An error occurred while updating the profile."
       );
     }
   };
@@ -126,26 +131,12 @@ export default function EditProfile() {
         {/* Content Edit Profile */}
         <div className="flex flex-col w-3/4 p-6 ">
           <h2 className="text-white text-2xl mb-4">Edit Profile</h2>
-          {error && <p className="text-red-500">{error}</p>} {/* Display error message */}
+          {error && <p className="text-red-500">{error}</p>}{" "}
+          {/* Display error message */}
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-            {/* Id User */}
-            <div>
-              <label className="text-gray-300">
-                Id
-              </label>
-              <input
-                type="text"
-                value={id}
-                onChange={(e) => setId(e.target.value)}
-                className="w-full p-2 rounded bg-gray-700 text-white outline-none focus:placeholder:text-gray-500"
-                placeholder="Your id"
-              />
-            </div>
             {/* Display Name */}
             <div>
-              <label className="text-gray-300">
-                Display Name
-              </label>
+              <label className="text-gray-300">Display Name</label>
               <input
                 type="text"
                 value={name}

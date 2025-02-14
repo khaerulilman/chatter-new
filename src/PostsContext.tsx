@@ -1,5 +1,11 @@
-import React, { createContext, useState, useContext, useEffect,  ReactNode } from 'react';
-import axios from 'axios'; // Pastikan Anda menginstal axios
+import React, {
+  createContext,
+  useState,
+  useContext,
+  useEffect,
+  ReactNode,
+} from "react";
+import axios from "axios"; // Pastikan Anda menginstal axios
 
 interface Post {
   id: string;
@@ -22,12 +28,14 @@ interface PostsContextType {
 
 const PostsContext = createContext<PostsContextType | undefined>(undefined);
 
-export const PostsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const PostsProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [posts, setPosts] = useState<Post[]>([]);
 
   const fetchPosts = async () => {
     try {
-      const response = await axios.get('https://chatter-imagekit-mwiert3dk-khaerulilmans-projects.vercel.app/api/auth/posts'); // Ganti dengan URL endpoint Anda
+      const response = await axios.get("http://localhost:3000/api/auth/posts"); // Ganti dengan URL endpoint Anda
       setPosts(response.data.data); // Sesuaikan dengan struktur respons Anda
     } catch (error) {
       console.error("Error fetching posts:", error);
@@ -39,15 +47,13 @@ export const PostsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const updatePost = (updatedPost: Post) => {
-    setPosts(prevPosts => 
-      prevPosts.map(post => 
-        post.id === updatedPost.id ? updatedPost : post
-      )
+    setPosts((prevPosts) =>
+      prevPosts.map((post) => (post.id === updatedPost.id ? updatedPost : post))
     );
   };
 
   useEffect(() => {
-    fetchPosts(); 
+    fetchPosts();
   }, []);
 
   return (
@@ -60,7 +66,7 @@ export const PostsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 export const usePosts = () => {
   const context = useContext(PostsContext);
   if (!context) {
-    throw new Error('usePosts must be used within a PostsProvider');
+    throw new Error("usePosts must be used within a PostsProvider");
   }
   return context;
 };

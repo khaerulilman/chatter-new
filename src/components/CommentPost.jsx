@@ -1,65 +1,70 @@
 import { useState, useEffect } from "react";
-import { useUser } from '../UserContext';
+import { useUser } from "../UserContext";
 import axios from "axios";
 
 export default function CommentPost({ postId }) {
-
   const { user } = useUser();
   const [commentContent, setCommentContent] = useState("");
   const [comments, setComments] = useState([]);
-  const [loading, setLoading] = useState(false); // Menambahkan state loading
+  const [loading, setLoading] = useState(false);
 
+  // Fetch comments when component mounts or postId changes
   useEffect(() => {
     const fetchComments = async () => {
-      setLoading(true); // Set loading true ketika mulai fetch
+      setLoading(true);
       try {
         const response = await axios.get(
-          `https://chatter-imagekit-frmxr41wo-khaerulilmans-projects.vercel.app/api/auth/comment/${postId}`,
+          `http://localhost:3000/api/auth/posts/${postId}/comments`, // Endpoint untuk mengambil komentar
           {
             headers: {
-              'Authorization': `Bearer ${user.token}`
-            }
+              Authorization: `Bearer ${user.token}`,
+            },
           }
         );
-        setComments(response.data.data);
+        setComments(response.data.data); // Ambil data dari response
       } catch (error) {
         console.error("Error fetching comments:", error);
+        alert(error.response?.data?.message || "Failed to fetch comments");
       } finally {
-        setLoading(false); // Set loading false setelah fetch selesai
+        setLoading(false);
       }
     };
 
     fetchComments();
   }, [postId, user]);
 
+  // Handle comment submission
   const handleCommentSubmit = async () => {
-    if (!commentContent.trim()) return;
+    if (!commentContent.trim()) {
+      alert("Comment cannot be empty!");
+      return;
+    }
 
     try {
       const response = await axios.post(
-        'https://chatter-imagekit-frmxr41wo-khaerulilmans-projects.vercel.app/api/auth/create-comment',
+        `http://localhost:3000/api/auth/posts/${postId}/comments`, // Endpoint untuk membuat komentar
         {
-          post_id: postId,
-          content: commentContent
+          content: commentContent, // Hanya kirim content
         },
         {
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user.token}`
-          }
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${user.token}`, // Sertakan token untuk autentikasi
+          },
         }
       );
 
       // Add the new comment to the list
-      const newComment = response.data.data;
+      const newComment = response.data.comment;
       setComments([...comments, newComment]);
       setCommentContent(""); // Clear input
     } catch (error) {
       console.error("Error creating comment:", error);
-      alert(error.response?.data?.error || "Failed to post comment");
+      alert(error.response?.data?.message || "Failed to post comment");
     }
   };
 
+  // Function to calculate time ago
   const timeAgo = (timestamp) => {
     const now = new Date();
     const commentTime = new Date(timestamp);
@@ -83,7 +88,7 @@ export default function CommentPost({ postId }) {
         <div className="w-10 h-10 rounded-lg overflow-hidden">
           {user?.profile_picture ? (
             <img
-              src={user.profile_picture} // Use the correct URL for the profile picture
+              src={user.profile_picture}
               alt={user.name}
               className="w-full h-full object-cover"
             />
@@ -120,13 +125,16 @@ export default function CommentPost({ postId }) {
 
       {/* Comment Display */}
       {comments.map((comment) => (
-        <div key={comment.id} className="flex flex-col px-8 py-4 border-t-gray-800 border-t">
+        <div
+          key={comment.id}
+          className="flex flex-col px-8 py-4 border-t-gray-800 border-t"
+        >
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <div className="w-10 h-10 rounded-lg overflow-hidden">
-                {comment.profile_picture ? (
+                {comment.user_profile_picture ? (
                   <img
-                    src={comment.profile_picture}
+                    src={comment.user_profile_picture}
                     alt={comment.user_name}
                     className="w-full h-full object-cover"
                   />
