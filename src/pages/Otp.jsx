@@ -23,7 +23,7 @@ export default function Otp() {
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/auth/verify-otp`,
+        `${import.meta.env.VITE_API_URL}/verify-otp`,
         {
           email,
           otp,

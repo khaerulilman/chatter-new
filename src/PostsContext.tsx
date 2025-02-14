@@ -35,7 +35,7 @@ export const PostsProvider: React.FC<{ children: ReactNode }> = ({
 
   const fetchPosts = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/api/auth/posts"); // Ganti dengan URL endpoint Anda
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/posts`); // Ganti dengan URL endpoint Anda
       setPosts(response.data.data); // Sesuaikan dengan struktur respons Anda
     } catch (error) {
       console.error("Error fetching posts:", error);

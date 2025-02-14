@@ -17,7 +17,7 @@ export default function CardPost({ post }) {
     const fetchCommentCount = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3000/api/auth/posts/${postId}/comments`,
+          `${import.meta.env.VITE_API_URL}/posts/${postId}/comments`,
           {
             headers: {
               Authorization: `Bearer ${user.token}`,
@@ -44,7 +44,7 @@ export default function CardPost({ post }) {
     setLoading(true); // Set loading to true when the like button is clicked
 
     try {
-      const response = await fetch("http://localhost:3000/api/auth/like", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/like`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

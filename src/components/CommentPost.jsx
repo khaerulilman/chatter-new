@@ -14,7 +14,7 @@ export default function CommentPost({ postId }) {
       setLoading(true);
       try {
         const response = await axios.get(
-          `http://localhost:3000/api/auth/posts/${postId}/comments`, // Endpoint untuk mengambil komentar
+          `${import.meta.env.VITE_API_URL}/posts/${postId}/comments`, // Endpoint untuk mengambil komentar
           {
             headers: {
               Authorization: `Bearer ${user.token}`,
@@ -42,7 +42,7 @@ export default function CommentPost({ postId }) {
 
     try {
       const response = await axios.post(
-        `http://localhost:3000/api/auth/posts/${postId}/comments`, // Endpoint untuk membuat komentar
+        `${import.meta.env.VITE_API_URL}/posts/${postId}/comments`, // Endpoint untuk membuat komentar
         {
           content: commentContent, // Hanya kirim content
         },

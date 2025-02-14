@@ -73,7 +73,7 @@ export default function EditProfile() {
       if (headerPicture) formData.append("header_picture", headerPicture);
 
       const response = await axios.post(
-        "http://localhost:3000/api/auth/edit-profile",
+        `${import.meta.env.VITE_API_URL}/edit-profile`,
         formData,
         {
           headers: {
