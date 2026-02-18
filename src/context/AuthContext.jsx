@@ -5,7 +5,13 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
+      const token = localStorage.getItem("token");
       const storedUser = localStorage.getItem("user");
+      // If no token exists, clear stale user data
+      if (!token) {
+        localStorage.removeItem("user");
+        return null;
+      }
       return storedUser ? JSON.parse(storedUser) : null;
     } catch (error) {
       console.error("Failed to parse user from localStorage:", error);
@@ -13,7 +19,7 @@ export const AuthProvider = ({ children }) => {
     }
   });
 
-  const isAuthenticated = !!user;
+  const isAuthenticated = !!user && !!localStorage.getItem("token");
 
   const login = (userData) => {
     setUser(userData);
@@ -21,6 +27,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setUser(null);
   };
 

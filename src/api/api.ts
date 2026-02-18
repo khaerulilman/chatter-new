@@ -29,6 +29,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Token expired or invalid
       localStorage.removeItem("token");
+      localStorage.removeItem("user");
       window.location.href = "/login";
     }
     return Promise.reject(error);
@@ -39,7 +40,12 @@ api.interceptors.response.use(
 
 export const authAPI = {
   // Register new user
-  register: (data: { name: string; email: string; password: string }) => {
+  register: (data: {
+    name: string;
+    username: string;
+    email: string;
+    password: string;
+  }) => {
     return api.post("/api/auth/register", data);
   },
 
@@ -48,9 +54,33 @@ export const authAPI = {
     return api.post("/api/auth/verify-otp", data);
   },
 
+  // Resend OTP
+  resendOtp: (data: { email: string }) => {
+    return api.post("/api/auth/resend-otp", data);
+  },
+
   // Login
   login: (data: { email: string; password: string }) => {
     return api.post("/api/auth/login", data);
+  },
+
+  // Forgot Password - Send OTP
+  forgotPassword: (data: { email: string }) => {
+    return api.post("/api/auth/forgot-password", data);
+  },
+
+  // Forgot Password - Resend OTP
+  resendForgotPasswordOtp: (data: { email: string }) => {
+    return api.post("/api/auth/forgot-password/resend-otp", data);
+  },
+
+  // Reset Password
+  resetPassword: (data: {
+    email: string;
+    otp: string;
+    newPassword: string;
+  }) => {
+    return api.post("/api/auth/reset-password", data);
   },
 };
 
@@ -190,6 +220,45 @@ export const chatsAPI = {
         headers: { "Content-Type": "multipart/form-data" },
       },
     );
+  },
+};
+
+// ==================== FOLLOWS APIs ====================
+
+export const followsAPI = {
+  // Toggle follow / unfollow a user
+  toggleFollow: (userId: string) => {
+    return api.patch(`/api/follows/${userId}/toggle`);
+  },
+
+  // Get follow status for a user (is the logged-in user following them?)
+  getFollowStatus: (userId: string) => {
+    return api.get(`/api/follows/${userId}/status`);
+  },
+
+  // Get followers list for a user
+  getFollowers: (userId: string) => {
+    return api.get(`/api/follows/${userId}/followers`);
+  },
+
+  // Get following list for a user
+  getFollowing: (userId: string) => {
+    return api.get(`/api/follows/${userId}/following`);
+  },
+
+  // Get follow stats (followerCount, followingCount) for a user
+  getFollowStats: (userId: string) => {
+    return api.get(`/api/follows/stats/${userId}`);
+  },
+
+  // Get recommended users (not yet followed by logged-in user)
+  getRecommendedUsers: () => {
+    return api.get("/api/follows/recommended");
+  },
+
+  // Get IDs of all users the logged-in user follows
+  getFollowingIds: () => {
+    return api.get("/api/follows/following-ids");
   },
 };
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import EmojiPicker from "emoji-picker-react";
 import { useAuth } from "../context/AuthContext";
 import { usePosts } from "../context/PostsContext";
@@ -13,6 +13,14 @@ export default function NewPost() {
   const [postContent, setPostContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
+  const [currentUser, setCurrentUser] = useState(user);
+
+  // Sync currentUser whenever user context changes
+  useEffect(() => {
+    if (user) {
+      setCurrentUser(user);
+    }
+  }, [user]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -97,9 +105,9 @@ export default function NewPost() {
         id: data.post.id,
         content: data.post.content,
         media_url: data.post.media_url,
-        user_name: user.name,
-        user_id: user.id,
-        profile_picture: user.profile_picture,
+        user_name: currentUser.name,
+        user_id: currentUser.id,
+        profile_picture: currentUser.profile_picture,
         created_at: new Date().toISOString(),
         likes: 0,
       });
@@ -123,24 +131,24 @@ export default function NewPost() {
 
   return (
     <div className="flex flex-col p-4 gap-8 h-screen">
-      {user ? (
+      {currentUser ? (
         <Link
-          to={`/profile/${user.username}`}
+          to={`/profile/${currentUser.username}`}
           className="flex justify-between items-center border border-solid border-gray-700 rounded-lg p-2"
         >
           <div className="flex gap-2 items-center">
             <div className="w-12 h-12 rounded-lg overflow-hidden">
               <img
                 src={
-                  user.profile_picture ||
+                  currentUser.profile_picture ||
                   "https://ik.imagekit.io/fs0yie8l6/images%20(13).jpg?updatedAt=1736213176171"
                 }
-                alt={user.name || "User"}
+                alt={currentUser.name || "User"}
                 className="w-full h-full object-cover rounded-lg"
               />
             </div>
             <div className="flex flex-col text-gray-400">
-              <p className="text-white">{user.username}</p>
+              <p className="text-white">{currentUser.username}</p>
             </div>
           </div>
         </Link>

@@ -43,7 +43,7 @@ export default function Login() {
   };
 
   return (
-    <section className="h-screen bg-gray-950 flex items-center justify-center">
+    <section className="min-h-screen bg-gray-950 flex items-center justify-center py-6">
       <div className="w-full max-w-md p-6 rounded-lg shadow-lg">
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <h3 className="text-4xl text-left text-white mb-6">Login</h3>
@@ -61,14 +61,21 @@ export default function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <p className="text-right text-white">Forgot Password?</p>
+          <p className="text-right text-white">
+            <Link
+              to="/forgot-password"
+              className="hover:underline transition duration-300"
+            >
+              Forgot Password?
+            </Link>
+          </p>
           {error && <p className="text-red-500">{error}</p>}
           <ButtonLogin name={"Sign In"} type="submit" />
           <p className="flex gap-1 text-base text-white text-center">
             Don't have an account?
             <Link
               to="/register"
-              className="hover:underline transition duration-300"
+              className="text-teal-400 hover:text-teal-300 transition"
             >
               Register
             </Link>

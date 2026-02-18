@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useChats } from "../context/ChatsContext";
 import { chatsAPI } from "../api/api";
+import { Link } from "react-router-dom";
 
 export default function ChatDetailComponent({ conversationId, onClose }) {
   const { user } = useAuth();
@@ -139,9 +140,12 @@ export default function ChatDetailComponent({ conversationId, onClose }) {
         )}
 
         <div>
-          <p className="text-white font-semibold leading-tight">
+          <Link
+            to={`/profile/${currentConv?.other_user_username}`}
+            className="text-white font-semibold leading-tight hover:underline"
+          >
             {currentConv?.other_user_name ?? "Loading..."}
-          </p>
+          </Link>
         </div>
       </div>
 

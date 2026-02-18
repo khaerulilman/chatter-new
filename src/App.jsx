@@ -13,6 +13,8 @@ import Register from "./pages/Register.jsx";
 import Home from "./pages/Home.jsx";
 import Profile from "./pages/Profile.jsx";
 import Otp from "./pages/Otp";
+import ForgotPassword from "./pages/ForgotPassword.jsx";
+import ForgotPasswordVerify from "./pages/ForgotPasswordVerify.jsx";
 import EditProfile from "./pages/EditProfile.jsx";
 import Chats from "./pages/Chats.jsx";
 import NotFound from "./pages/NotFound.jsx";
@@ -49,6 +51,22 @@ function App() {
                 element={
                   <PublicRoute>
                     <Otp />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/forgot-password"
+                element={
+                  <PublicRoute>
+                    <ForgotPassword />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/forgot-password/verify"
+                element={
+                  <PublicRoute>
+                    <ForgotPasswordVerify />
                   </PublicRoute>
                 }
               />
