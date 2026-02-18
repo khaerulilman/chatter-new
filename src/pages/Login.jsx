@@ -2,40 +2,40 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Input from "../components/Input";
 import ButtonLogin from "../components/Button";
-import axios from "axios";
-import { useUser } from "../UserContext";
+import { authAPI } from "../api/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { setUser } = useUser(); // Access the user context
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/login`,
-        { email, password }
-      );
+      const response = await authAPI.login({ email, password });
 
       const result = response.data;
 
-      // Simpan user data beserta token
-      setUser({
+      // Simpan token ke localStorage untuk digunakan oleh interceptor
+      localStorage.setItem("token", result.token);
+
+      // Simpan user data ke context
+      login({
         id: result.data.id,
         name: result.data.name,
         email: result.data.email,
+        username: result.data.username,
         profile_picture: result.data.profile_picture,
         header_picture: result.data.header_picture,
         created_at: result.data.created_at,
-        token: result.token,
       });
 
       // Redirect ke halaman utama
-      navigate("/home");
+      navigate("/");
     } catch (error) {
       console.error("Login error:", error);
       setError(error.response?.data?.message || "Terjadi kesalahan saat login");

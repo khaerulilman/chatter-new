@@ -1,17 +1,14 @@
 import CardPost from "../components/CardPost";
-import { usePosts } from "../PostsContext";
+import { usePosts } from "../context/PostsContext";
 import { useEffect } from "react";
 
 export default function Post() {
-  
   const { posts } = usePosts();
-  
 
   useEffect(() => {
-    console.log("Posts updated:", posts);
+    // Monitor posts updates
   }, [posts]);
 
-  
   return (
     <>
       {posts.map((post, index) => (

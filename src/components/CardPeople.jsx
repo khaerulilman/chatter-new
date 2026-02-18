@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 export default function CardPeople({ person }) {
   return (
     <div className="p-4 border-b border-gray-500 h-24 flex">
-      <Link to={`/profile/${person.id}`} className="flex items-center">
+      <Link to={`/profile/${person.username}`} className="flex items-center">
         <div className="w-10 h-10 bg-white rounded-lg overflow-hidden">
           <img
             src={person.profile_picture}

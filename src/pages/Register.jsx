@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Input from "../components/Input";
 import ButtonRegister from "../components/Button";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { authAPI } from "../api/api";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -15,19 +15,11 @@ export default function Register() {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/auth/register`,
-        {
-          name,
-          email,
-          password,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await authAPI.register({
+        name,
+        email,
+        password,
+      });
 
       console.log(`Otp success: ${response.data}`);
       localStorage.setItem("registeredEmail", email);

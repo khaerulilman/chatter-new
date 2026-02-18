@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import { authAPI } from "../api/api";
 import { useNavigate } from "react-router-dom";
 
 export default function Otp() {
@@ -22,25 +22,18 @@ export default function Otp() {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/verify-otp`,
-        {
-          email,
-          otp,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await authAPI.verifyOtp({
+        email,
+        otp,
+      });
       console.log("Otp Success verified: ", response.data);
       localStorage.removeItem("registerEmail");
       navigate("/");
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.log(error.response?.data?.message || "Otp failed");
-      }
+      console.error(
+        "Otp verification failed:",
+        error.response?.data?.message || error.message,
+      );
     }
   };
 

@@ -1,35 +1,71 @@
-import './index.css';
-import { UserProvider } from "./UserContext";
-import { PostsProvider } from "./PostsContext";
-import { CommentsProvider } from './CommentsContext'; // Import CommentsProvider
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Login from './pages/Login.jsx';
-import Register from './pages/Register.jsx';
-import Home from './pages/Home.jsx';
-import Profile from './pages/Profile.jsx';
-import Otp from './pages/Otp';
-import Notifications from './pages/Notifications';
-import EditProfile from './pages/EditProfile.jsx';
+import "./index.css";
+import { AuthProvider } from "./context/AuthContext.jsx";
+import { PostsProvider } from "./context/PostsContext.jsx";
+import { ChatsProvider } from "./context/ChatsContext.jsx";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import Login from "./pages/Login.jsx";
+import Register from "./pages/Register.jsx";
+import Home from "./pages/Home.jsx";
+import Profile from "./pages/Profile.jsx";
+import Otp from "./pages/Otp";
+import EditProfile from "./pages/EditProfile.jsx";
+import Chats from "./pages/Chats.jsx";
+import NotFound from "./pages/NotFound.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import PublicRoute from "./components/PublicRoute.jsx";
 
 function App() {
   return (
-    <UserProvider>
+    <AuthProvider>
       <PostsProvider>
-        <CommentsProvider> 
+        <ChatsProvider>
           <Router>
             <Routes>
-              <Route path="/" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/otp" element={<Otp />} />
-              <Route path="/home" element={<Home />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/edit-profile" element={<EditProfile />} />
+              <Route path="/" element={<Home />} />
+
+              <Route
+                path="/login"
+                element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/register"
+                element={
+                  <PublicRoute>
+                    <Register />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/otp"
+                element={
+                  <PublicRoute>
+                    <Otp />
+                  </PublicRoute>
+                }
+              />
+
+              <Route element={<ProtectedRoute />}>
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/profile/:username" element={<Profile />} />
+                <Route path="/edit-profile" element={<EditProfile />} />
+                <Route path="/chats" element={<Chats />} />
+                <Route path="/chats/:conversationId" element={<Chats />} />
+                <Route path="*" element={<NotFound />} />
+              </Route>
             </Routes>
-          </Router>
-        </CommentsProvider>
-      </PostsProvider>
-    </UserProvider>
+          </Router>{" "}
+        </ChatsProvider>
+      </PostsProvider>{" "}
+    </AuthProvider>
   );
 }
 

@@ -1,33 +1,57 @@
 import { Link, useNavigate } from "react-router-dom";
 import imgLogo from "../assets/img/LogoChatter.png";
-import { useUser } from "../UserContext";
+import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
-import axios from "axios";
+import { usersAPI } from "../api/api";
 
 export default function EditProfile() {
-  const { user, setUser } = useUser();
+  const { user, setUser, logout } = useAuth();
   const navigate = useNavigate();
   const [id, setId] = useState(user?.id || "");
   const [name, setName] = useState(user?.name || "");
+  const [username, setUsername] = useState(user?.username || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [createdAt, setCreatedAt] = useState("");
+  const [updatedAt, setUpdatedAt] = useState("");
   const [password, setPassword] = useState("");
   const [profilePicture, setProfilePicture] = useState(null);
   const [headerPicture, setHeaderPicture] = useState(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      setId(user.id || "");
-      setName(user.name || "");
-    } else {
-      // Jika user tidak ada, redirect ke halaman login
-      navigate("/login");
-    }
-  }, [user, navigate]);
+    const fetchUserData = async () => {
+      if (!user?.username) {
+        navigate("/login");
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await usersAPI.getUserByUsername(user.username);
+        const userData = response.data.user;
+
+        // Update form fields with fetched data
+        setId(userData.id || "");
+        setName(userData.name || "");
+        setUsername(userData.username || "");
+        setEmail(userData.email || "");
+        setCreatedAt(userData.created_at || "");
+        setUpdatedAt(userData.updated_at || "");
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        setError("Failed to load user data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [user?.username, navigate]);
 
   const handleLogout = () => {
     console.log("Logging out...");
-    localStorage.removeItem("token");
-    setUser(null); // Update context to null
+    logout();
     navigate("/", { replace: true });
   };
 
@@ -35,7 +59,7 @@ export default function EditProfile() {
     e.preventDefault();
 
     // Pastikan user dan token tersedia
-    if (!user || !user.token) {
+    if (!user || !localStorage.getItem("token")) {
       setError("User not authenticated. Please login again.");
       navigate("/login");
       return;
@@ -45,7 +69,7 @@ export default function EditProfile() {
     if (
       profilePicture &&
       !["image/png", "image/jpeg", "image/gif", "image/webp"].includes(
-        profilePicture.type
+        profilePicture.type,
       )
     ) {
       setError("Invalid file type for profile picture.");
@@ -55,7 +79,7 @@ export default function EditProfile() {
     if (
       headerPicture &&
       !["image/png", "image/jpeg", "image/gif", "image/webp"].includes(
-        headerPicture.type
+        headerPicture.type,
       )
     ) {
       setError("Invalid file type for header picture.");
@@ -68,35 +92,25 @@ export default function EditProfile() {
       // Hanya tambahkan field yang diubah
       if (id !== user.id) formData.append("id", id);
       if (name !== user.name) formData.append("name", name);
+      if (email !== user.email) formData.append("email", email);
       if (password) formData.append("password", password);
       if (profilePicture) formData.append("profile_picture", profilePicture);
       if (headerPicture) formData.append("header_picture", headerPicture);
 
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/edit-profile`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const response = await usersAPI.updateProfile(formData);
 
       // Update user context dengan data dari response
       setUser((prevUser) => ({
         ...prevUser,
         ...(response.data.data || {}),
-        token: response.data.token || prevUser.token,
       }));
 
       alert("Profile updated successfully!");
-      navigate("/");
     } catch (error) {
       console.error("Error updating profile:", error);
       setError(
         error.response?.data?.error ||
-          "An error occurred while updating the profile."
+          "An error occurred while updating the profile.",
       );
     }
   };
@@ -104,6 +118,14 @@ export default function EditProfile() {
   // Render hanya jika user ada
   if (!user) {
     return null;
+  }
+
+  if (loading) {
+    return (
+      <section className="h-screen bg-gray-950 flex items-center justify-center text-white">
+        Loading...
+      </section>
+    );
   }
 
   return (
@@ -116,7 +138,7 @@ export default function EditProfile() {
           </div>
           <ul className="text-gray-300 flex flex-col gap-2">
             <li className="hover:text-white">
-              <Link to="/home">
+              <Link to="/">
                 <i className="fa-solid fa-arrow-left mr-2"></i> Back to Chatter
               </Link>
             </li>
@@ -146,21 +168,53 @@ export default function EditProfile() {
               />
             </div>
 
-            {/* Password */}
+            {/* Username */}
             <div>
-              <label className="text-gray-300" htmlFor="password">
-                Password
-              </label>
+              <label className="text-gray-300">Username</label>
               <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-2 rounded bg-gray-700 text-white outline-none focus:placeholder:text-gray-500"
-                placeholder="Enter your password"
+                type="text"
+                value={username}
+                disabled
+                className="w-full p-2 rounded bg-gray-600 text-gray-400 outline-none cursor-not-allowed"
+                placeholder="Your username"
               />
             </div>
 
+            {/* Email */}
+            <div>
+              <label className="text-gray-300">Email</label>
+              <input
+                type="email"
+                value={email}
+                disabled
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full p-2 rounded bg-gray-600 text-gray-400 outline-none cursor-not-allowed"
+                placeholder="Your email address"
+              />
+            </div>
+            {/* Created At */}
+            <div>
+              <label className="text-gray-300">Account Created</label>
+              <input
+                type="text"
+                value={createdAt ? new Date(createdAt).toLocaleString() : ""}
+                disabled
+                className="w-full p-2 rounded bg-gray-600 text-gray-400 outline-none cursor-not-allowed"
+                placeholder="Account creation date"
+              />
+            </div>
+
+            {/* Updated At */}
+            <div>
+              <label className="text-gray-300">Last Updated</label>
+              <input
+                type="text"
+                value={updatedAt ? new Date(updatedAt).toLocaleString() : ""}
+                disabled
+                className="w-full p-2 rounded bg-gray-600 text-gray-400 outline-none cursor-not-allowed"
+                placeholder="Last update date"
+              />
+            </div>
             {/* Profile Picture */}
             <div>
               <label className="text-gray-300" htmlFor="profilePicture">
