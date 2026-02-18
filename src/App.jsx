@@ -12,6 +12,7 @@ import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Home from "./pages/Home.jsx";
 import Profile from "./pages/Profile.jsx";
+import PostDetail from "./pages/PostDetail.jsx";
 import Otp from "./pages/Otp";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 import ForgotPasswordVerify from "./pages/ForgotPasswordVerify.jsx";
@@ -75,6 +76,7 @@ function App() {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/profile/:username" element={<Profile />} />
                 <Route path="/edit-profile" element={<EditProfile />} />
+                <Route path="/posts/:postId" element={<PostDetail />} />
                 <Route path="/chats" element={<Chats />} />
                 <Route path="/chats/:conversationId" element={<Chats />} />
                 <Route path="*" element={<NotFound />} />

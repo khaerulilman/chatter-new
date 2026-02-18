@@ -31,13 +31,13 @@ export default function CardPost({ post }) {
     };
 
     // Fetch comment count if post has an ID
-    if (post.id) {
+    if (post?.id) {
       fetchCommentCount();
     }
 
     // Check if post is already liked by user
     const checkLikeStatus = async () => {
-      if (user?.id) {
+      if (user?.id && post?.id) {
         try {
           const response = await likesAPI.getLikeStatus(post.id);
           setIsLiked(response.data.isLiked);
@@ -48,7 +48,7 @@ export default function CardPost({ post }) {
           setIsLiked(post.isLiked || false);
           setLikeCount(post.likes || 0);
         }
-      } else {
+      } else if (post?.id) {
         // If user not logged in, use post data
         setIsLiked(post.isLiked || false);
         setLikeCount(post.likes || 0);
@@ -56,7 +56,7 @@ export default function CardPost({ post }) {
     };
 
     checkLikeStatus();
-  }, [post.id, user?.id]); // Only depend on post.id and user.id
+  }, [post?.id, user?.id]); // Only depend on post.id and user.id
 
   const handleLike = async () => {
     // Check if user is logged in by checking token in localStorage
@@ -121,8 +121,17 @@ export default function CardPost({ post }) {
     return `${hours}:${minutes}`;
   };
 
+  const handleDoubleClick = (e) => {
+    // Don't navigate if clicking on action buttons
+    if (e.target.closest("button")) return;
+    navigate(`/posts/${post.id}`);
+  };
+
   return (
-    <div className="border-b border-gray-500 h-auto">
+    <div
+      className="border-b border-gray-500 h-auto cursor-pointer"
+      onDoubleClick={handleDoubleClick}
+    >
       {/* Header */}
       <div className="flex flex-col">
         <div className="flex justify-between items-center my-1 px-4 pt-4">

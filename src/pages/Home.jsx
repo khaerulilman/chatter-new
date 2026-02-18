@@ -29,9 +29,9 @@ export default function Home() {
       setShowNews(true);
       setShowPeople(false);
     } else {
-      // default to news
-      setShowPost(false);
-      setShowNews(true);
+      // default to posts
+      setShowPost(true);
+      setShowNews(false);
       setShowPeople(false);
     }
   }, [searchParams]);
