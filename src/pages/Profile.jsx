@@ -232,7 +232,6 @@ export default function Profile() {
         <Navbar onClick={() => {}} />
         <div className="h-screen bg-gray-950 flex gap-2 max-lg:gap-0 justify-center ">
           <div className="flex flex-col max-lg:hidden w-1/5 max-md:w-full max-lg:w-6/12 xl:mt-3">
-            <Search />
             <NewPost />
           </div>
 
