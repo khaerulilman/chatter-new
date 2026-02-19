@@ -34,15 +34,6 @@ export default function Register() {
       console.error("Registration error:", error);
       if (axios.isAxiosError(error)) {
         const message = error.response?.data?.message || "Registration failed";
-        // Pending verification already exists — redirect to OTP page
-        if (
-          error.response?.status === 409 &&
-          message.includes("menunggu verifikasi")
-        ) {
-          localStorage.setItem("registeredEmail", email);
-          navigate("/otp");
-          return;
-        }
         setError(message);
       } else {
         setError("An unexpected error occurred");
