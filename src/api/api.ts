@@ -140,6 +140,21 @@ export const postsAPI = {
   deletePost: (postId: string) => {
     return api.delete(`/api/posts/${postId}`);
   },
+
+  // Toggle save on post
+  toggleSave: (postId: string) => {
+    return api.patch(`/api/posts/${postId}/saves`);
+  },
+
+  // Get save status for a post
+  getSaveStatus: (postId: string) => {
+    return api.get(`/api/posts/${postId}/saves`);
+  },
+
+  // Get saved posts for the logged-in user
+  getSavedPosts: (page: number = 1, limit: number = 20) => {
+    return api.get("/api/posts/saved", { params: { page, limit } });
+  },
 };
 
 // ==================== LIKES APIs ====================
@@ -259,6 +274,35 @@ export const followsAPI = {
   // Get IDs of all users the logged-in user follows
   getFollowingIds: () => {
     return api.get("/api/follows/following-ids");
+  },
+};
+
+// ==================== NOTIFICATIONS APIs ====================
+
+export const notificationsAPI = {
+  // Get all notifications for the logged-in user
+  getNotifications: () => {
+    return api.get("/api/notifications");
+  },
+
+  // Get unread notification count
+  getUnreadCount: () => {
+    return api.get("/api/notifications/unread-count");
+  },
+
+  // Mark a single notification as read
+  markRead: (notificationId: string) => {
+    return api.patch(`/api/notifications/${notificationId}/read`);
+  },
+
+  // Mark all notifications as read
+  markAllRead: () => {
+    return api.patch("/api/notifications/read-all");
+  },
+
+  // Delete a notification
+  deleteNotification: (notificationId: string) => {
+    return api.delete(`/api/notifications/${notificationId}`);
   },
 };
 

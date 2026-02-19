@@ -45,6 +45,10 @@ export default function Profile() {
   const [followingIds, setFollowingIds] = useState(new Set());
   const [listsLoading, setListsLoading] = useState(false);
 
+  // Saved posts (only for profile owner)
+  const [savedPosts, setSavedPosts] = useState([]);
+  const [savedLoading, setSavedLoading] = useState(false);
+
   const activeTab = searchParams.get("tab") || "posts";
   const isOwner = loggedInUser?.username === username;
 
@@ -184,6 +188,25 @@ export default function Profile() {
       return next;
     });
   }, []);
+
+  // Fetch saved posts when tab = "saved" and user is owner
+  useEffect(() => {
+    if (activeTab !== "saved" || !isOwner) return;
+
+    const fetchSaved = async () => {
+      setSavedLoading(true);
+      try {
+        const res = await postsAPI.getSavedPosts();
+        setSavedPosts(res.data.data || []);
+      } catch (e) {
+        console.error("Error fetching saved posts:", e);
+        setSavedPosts([]);
+      } finally {
+        setSavedLoading(false);
+      }
+    };
+    fetchSaved();
+  }, [activeTab, isOwner]);
 
   if (loading) {
     return (
@@ -380,6 +403,21 @@ export default function Profile() {
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />
                   )}
                 </button>
+                {isOwner && (
+                  <button
+                    onClick={() => setSearchParams({ tab: "saved" })}
+                    className={`px-6 py-3 text-sm font-medium relative ${
+                      activeTab === "saved"
+                        ? "text-white"
+                        : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    Saved
+                    {activeTab === "saved" && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-yellow-400 rounded-full" />
+                    )}
+                  </button>
+                )}
               </div>
 
               {/* Tab Content */}
@@ -404,6 +442,25 @@ export default function Profile() {
                 )}
 
                 {/* Followers / Following tab */}
+                {/* Saved posts tab — only visible to owner */}
+                {activeTab === "saved" && isOwner && (
+                  <div>
+                    {savedLoading ? (
+                      <div className="flex items-center justify-center py-8 text-white">
+                        Loading saved posts...
+                      </div>
+                    ) : savedPosts.length > 0 ? (
+                      savedPosts.map((post) => (
+                        <CardPost key={post.id} post={post} />
+                      ))
+                    ) : (
+                      <div className="flex items-center justify-center py-8 text-gray-400">
+                        No saved posts yet
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {(activeTab === "followers" || activeTab === "following") && (
                   <div>
                     {listsLoading ? (

@@ -15,6 +15,8 @@ export default function CardPost({ post }) {
   const [commentCount, setCommentCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
 
   useEffect(() => {
     // Fetch comment count for the post
@@ -55,7 +57,20 @@ export default function CardPost({ post }) {
       }
     };
 
+    // Check if post is saved by user
+    const checkSaveStatus = async () => {
+      if (user?.id && post?.id) {
+        try {
+          const response = await postsAPI.getSaveStatus(post.id);
+          setIsSaved(response.data.isSaved);
+        } catch (error) {
+          console.error("Error checking save status:", error);
+        }
+      }
+    };
+
     checkLikeStatus();
+    checkSaveStatus();
   }, [post?.id, user?.id]); // Only depend on post.id and user.id
 
   const handleLike = async () => {
@@ -88,6 +103,27 @@ export default function CardPost({ post }) {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!localStorage.getItem("token")) {
+      navigate("/login");
+      return;
+    }
+
+    setSaveLoading(true);
+    try {
+      const response = await postsAPI.toggleSave(post.id);
+      setIsSaved(response.data.isSaved);
+    } catch (error) {
+      console.error("Error saving post:", error);
+      alert(
+        error.response?.data?.message ||
+          "An error occurred while saving the post",
+      );
+    } finally {
+      setSaveLoading(false);
     }
   };
 
@@ -147,7 +183,13 @@ export default function CardPost({ post }) {
               />
             </div>
             <div className="flex flex-col text-gray-400">
-              <p className="text-white">{post.user_name || "Anonymous"}</p>
+              <button
+                onClick={() => navigate(`/profile/${post.username}`)}
+                className="text-white hover:underline text-left"
+                title={post.user_name}
+              >
+                {post.user_name || "Anonymous"}
+              </button>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -221,6 +263,30 @@ export default function CardPost({ post }) {
         >
           <i className="fa-regular fa-comment text-xl"></i>
           <p className="text-xl">{commentCount}</p>
+        </button>
+        <button
+          onClick={handleSave}
+          className={`flex items-center text-lg gap-2 transition-colors ml-auto ${
+            isSaved
+              ? "text-yellow-400 hover:text-yellow-300"
+              : "text-gray-600 hover:text-white"
+          } ${saveLoading ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+          disabled={saveLoading}
+          title={
+            user?.id
+              ? isSaved
+                ? "Unsave this post"
+                : "Save this post"
+              : "Login to save posts"
+          }
+        >
+          {saveLoading ? (
+            <i className="fa-solid fa-spinner fa-spin text-xl"></i>
+          ) : (
+            <i
+              className={`fa-${isSaved ? "solid" : "regular"} fa-bookmark text-xl`}
+            ></i>
+          )}
         </button>
       </div>
 
