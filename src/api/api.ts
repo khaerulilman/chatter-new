@@ -110,9 +110,9 @@ export const usersAPI = {
 // ==================== POSTS APIs ====================
 
 export const postsAPI = {
-  // Get all posts
-  getPosts: () => {
-    return api.get("/api/posts");
+  // Get all posts (with pagination)
+  getPosts: (page: number = 1, limit: number = 20) => {
+    return api.get("/api/posts", { params: { page, limit } });
   },
 
   // Get posts by user ID

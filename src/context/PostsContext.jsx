@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
-import axios from "axios";
+import { postsAPI } from "../api/api";
 
 const PostsContext = createContext(undefined);
 
@@ -8,11 +8,7 @@ export const PostsProvider = ({ children }) => {
 
   const fetchPosts = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/posts?page=1&limit=20`,
-        token ? { headers: { Authorization: `Bearer ${token}` } } : {},
-      );
+      const response = await postsAPI.getPosts(1, 20);
       setPosts(response.data.data || []);
     } catch (error) {
       console.error("Error fetching posts:", error);
