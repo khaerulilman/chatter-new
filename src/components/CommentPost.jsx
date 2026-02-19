@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { useUser } from "../UserContext";
-import axios from "axios";
+import { useAuth } from "../context/AuthContext";
+import { commentsAPI } from "../api/api";
+import { useNavigate } from "react-router-dom";
 
 export default function CommentPost({ postId }) {
-  const { user } = useUser();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [commentContent, setCommentContent] = useState("");
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -13,14 +15,7 @@ export default function CommentPost({ postId }) {
     const fetchComments = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/posts/${postId}/comments`, // Endpoint untuk mengambil komentar
-          {
-            headers: {
-              Authorization: `Bearer ${user.token}`,
-            },
-          }
-        );
+        const response = await commentsAPI.getComments(postId);
         setComments(response.data.data); // Ambil data dari response
       } catch (error) {
         console.error("Error fetching comments:", error);
@@ -35,24 +30,18 @@ export default function CommentPost({ postId }) {
 
   // Handle comment submission
   const handleCommentSubmit = async () => {
+    if (!user?.id) {
+      navigate("/login");
+      return;
+    }
+
     if (!commentContent.trim()) {
       alert("Comment cannot be empty!");
       return;
     }
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/posts/${postId}/comments`, // Endpoint untuk membuat komentar
-        {
-          content: commentContent, // Hanya kirim content
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${user.token}`, // Sertakan token untuk autentikasi
-          },
-        }
-      );
+      const response = await commentsAPI.createComment(postId, commentContent);
 
       // Add the new comment to the list
       const newComment = response.data.comment;
@@ -64,21 +53,32 @@ export default function CommentPost({ postId }) {
     }
   };
 
-  // Function to calculate time ago
-  const timeAgo = (timestamp) => {
-    const now = new Date();
-    const commentTime = new Date(timestamp);
-    const diffInSeconds = Math.floor((now - commentTime) / 1000);
-
-    if (diffInSeconds < 60) {
-      return "Just now";
-    } else if (diffInSeconds < 3600) {
-      return `${Math.floor(diffInSeconds / 60)}m`;
-    } else if (diffInSeconds < 86400) {
-      return `${Math.floor(diffInSeconds / 3600)}h`;
-    } else {
-      return `${Math.floor(diffInSeconds / 86400)}d`;
+  // Handle comment deletion
+  const handleDeleteComment = async (commentId) => {
+    if (!window.confirm("Are you sure you want to delete this comment?")) {
+      return;
     }
+
+    try {
+      await commentsAPI.deleteComment(postId, commentId);
+
+      // Remove the comment from the list
+      setComments(comments.filter((comment) => comment.id !== commentId));
+
+      // Show success alert
+      alert("Comment deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      alert(error.response?.data?.message || "Failed to delete comment");
+    }
+  };
+
+  // Function to format time for comments (show only time)
+  const formatCommentTime = (timestamp) => {
+    const commentTime = new Date(timestamp);
+    const hours = commentTime.getHours().toString().padStart(2, "0");
+    const minutes = commentTime.getMinutes().toString().padStart(2, "0");
+    return `${hours}:${minutes}`;
   };
 
   return (
@@ -86,19 +86,14 @@ export default function CommentPost({ postId }) {
       {/* Comment Input */}
       <div className="flex items-center mb-2 pt-4 pb-3 px-8 gap-3">
         <div className="w-10 h-10 rounded-lg overflow-hidden">
-          {user?.profile_picture ? (
-            <img
-              src={user.profile_picture}
-              alt={user.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <img
-              src="https://ik.imagekit.io/fs0yie8l6/images%20(13).jpg?updatedAt=1736213176171"
-              alt="Default Profile"
-              className="w-full h-full object-cover"
-            />
-          )}
+          <img
+            src={
+              user?.profile_picture ||
+              "https://ik.imagekit.io/fs0yie8l6/images%20(13).jpg?updatedAt=1736213176171"
+            }
+            alt={user?.name || "User"}
+            className="w-full h-full object-cover"
+          />
         </div>
 
         <input
@@ -132,26 +127,32 @@ export default function CommentPost({ postId }) {
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
               <div className="w-10 h-10 rounded-lg overflow-hidden">
-                {comment.user_profile_picture ? (
-                  <img
-                    src={comment.user_profile_picture}
-                    alt={comment.user_name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <img
-                    src="https://ik.imagekit.io/fs0yie8l6/images%20(13).jpg?updatedAt=1736213176171"
-                    alt="Default Profile"
-                    className="w-full h-full object-cover"
-                  />
-                )}
+                <img
+                  src={
+                    comment.user_profile_picture ||
+                    "https://ik.imagekit.io/fs0yie8l6/images%20(13).jpg?updatedAt=1736213176171"
+                  }
+                  alt={comment.user_name || "User"}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="flex flex-col text-gray-400 text-sm">
                 <p className="text-white text-base">{comment.user_name}</p>
               </div>
             </div>
-            <div className="text-gray-400 text-sm">
-              <p>{timeAgo(comment.created_at)}</p>
+            <div className="flex items-center gap-2">
+              <div className="text-gray-400 text-sm">
+                <p>{formatCommentTime(comment.created_at)}</p>
+              </div>
+              {user?.id === comment.user_id && (
+                <button
+                  onClick={() => handleDeleteComment(comment.id)}
+                  className="text-gray-400 hover:text-red-500 transition-colors"
+                  title="Delete comment"
+                >
+                  <i className="fa-solid fa-trash text-sm"></i>
+                </button>
+              )}
             </div>
           </div>
           <div className="text-white text-sm mt-2 px-12">

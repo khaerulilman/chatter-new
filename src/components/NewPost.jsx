@@ -1,22 +1,24 @@
 import { useState, useEffect } from "react";
 import EmojiPicker from "emoji-picker-react";
-import { useUser } from "../UserContext";
-import { usePosts } from "../PostsContext";
+import { useAuth } from "../context/AuthContext";
+import { usePosts } from "../context/PostsContext";
+import { useNavigate, Link } from "react-router-dom";
 
 export default function NewPost() {
-  const { user } = useUser();
+  const { user } = useAuth();
   const { addPost } = usePosts();
+  const navigate = useNavigate();
   const [fileImage, setFileImage] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [postContent, setPostContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
+  const [currentUser, setCurrentUser] = useState(user);
 
+  // Sync currentUser whenever user context changes
   useEffect(() => {
-    if (user?.token) {
-      console.log("Token tersedia:", user.token.substring(0, 20) + "...");
-    } else {
-      console.log("Token tidak tersedia");
+    if (user) {
+      setCurrentUser(user);
     }
   }, [user]);
 
@@ -32,7 +34,7 @@ export default function NewPost() {
     ];
     if (!supportedTypes.includes(file.type)) {
       alert(
-        "Format file tidak didukung. Gunakan gambar (jpeg, png, gif) atau video (mp4)."
+        "Format file tidak didukung. Gunakan gambar (jpeg, png, gif) atau video (mp4).",
       );
       return;
     }
@@ -60,8 +62,9 @@ export default function NewPost() {
   };
 
   const handlePost = async () => {
-    if (!user?.token) {
-      alert("Silakan login terlebih dahulu");
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
       return;
     }
 
@@ -81,14 +84,14 @@ export default function NewPost() {
       }
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/create-post`,
+        `${import.meta.env.VITE_API_URL}/api/posts`,
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${user.token}`, // Menambahkan header Authorization dengan token Bearer
+            Authorization: `Bearer ${token}`,
           },
           body: formData,
-        }
+        },
       );
 
       const data = await response.json();
@@ -102,9 +105,9 @@ export default function NewPost() {
         id: data.post.id,
         content: data.post.content,
         media_url: data.post.media_url,
-        user_name: user.name,
-        user_id: user.id,
-        profile_picture: user.profile_picture,
+        user_name: currentUser.name,
+        user_id: currentUser.id,
+        profile_picture: currentUser.profile_picture,
         created_at: new Date().toISOString(),
         likes: 0,
       });
@@ -112,7 +115,7 @@ export default function NewPost() {
       resetForm();
       alert("Post berhasil dibuat!");
 
-      window.location.reload(); // Reload untuk melihat post baru
+      navigate("/?tab=posts"); // Redirect ke tab posts
     } catch (error) {
       console.error("Error saat membuat post:", error);
       alert(error.message || "Terjadi kesalahan saat membuat post");
@@ -128,31 +131,46 @@ export default function NewPost() {
 
   return (
     <div className="flex flex-col p-4 gap-8 h-screen">
-      <div className="flex justify-between items-center">
-        <div className="flex gap-2">
-          <div className="w-12 h-12 rounded-lg overflow-hidden">
-            {user?.profile_picture ? (
+      {currentUser ? (
+        <Link
+          to={`/profile/${currentUser.username}`}
+          className="flex justify-between items-center border border-solid border-gray-700 rounded-lg p-2"
+        >
+          <div className="flex gap-2 items-center">
+            <div className="w-12 h-12 rounded-lg overflow-hidden">
               <img
-                src={user.profile_picture}
-                alt={user.name}
+                src={
+                  currentUser.profile_picture ||
+                  "https://ik.imagekit.io/fs0yie8l6/images%20(13).jpg?updatedAt=1736213176171"
+                }
+                alt={currentUser.name || "User"}
                 className="w-full h-full object-cover rounded-lg"
               />
-            ) : (
-              <img
-                src="https://ik.imagekit.io/fs0yie8l6/images%20(13).jpg?updatedAt=1736213176171"
-                alt="Default Profile"
-                className="w-full h-full object-cover rounded-lg"
-              />
-            )}
+            </div>
+            <div className="flex flex-col text-gray-400">
+              <p className="text-white">{currentUser.username}</p>
+            </div>
           </div>
-          <div className="flex flex-col text-gray-400">
-            <p className="text-white">{user?.name || "Guest"}</p>
+        </Link>
+      ) : (
+        <div className="flex flex-col gap-3">
+          <p className="text-gray-400 text-sm">Login untuk membuat post</p>
+          <div className="flex gap-2">
+            <Link
+              to="/login"
+              className="flex-1 text-center bg-teal-700 hover:bg-teal-600 transition-colors text-white py-2 rounded-lg font-medium"
+            >
+              Login
+            </Link>
+            <Link
+              to="/register"
+              className="flex-1 text-center bg-gray-700 hover:bg-gray-600 transition-colors text-white py-2 rounded-lg font-medium"
+            >
+              Register
+            </Link>
           </div>
         </div>
-        <button className="text-gray-400">
-          <i className="fa-solid fa-ellipsis"></i>
-        </button>
-      </div>
+      )}
 
       <div className="flex flex-col text-white bg-gray-900 rounded-lg">
         <textarea

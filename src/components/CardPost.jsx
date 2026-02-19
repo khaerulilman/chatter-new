@@ -1,84 +1,129 @@
 import React, { useState, useEffect } from "react";
 import CommentPost from "./CommentPost";
-import { useUser } from "../UserContext";
-import { usePosts } from "../PostsContext";
-import axios from "axios";
+import { useAuth } from "../context/AuthContext";
+import { usePosts } from "../context/PostsContext";
+import { commentsAPI, likesAPI, postsAPI } from "../api/api";
+import { useNavigate } from "react-router-dom";
 
 export default function CardPost({ post }) {
-  const { user } = useUser();
-  const { updatePost } = usePosts();
+  const { user } = useAuth();
+  const { updatePost, fetchPosts } = usePosts();
+  const navigate = useNavigate();
   const [showComment, setShowComment] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [likeCount, setLikeCount] = useState(post.likes || 0);
   const [commentCount, setCommentCount] = useState(0);
-  const [loading, setLoading] = useState(false); // Loading state for like button
+  const [loading, setLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
 
   useEffect(() => {
+    // Fetch comment count for the post
     const fetchCommentCount = async () => {
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/posts/${postId}/comments`,
-          {
-            headers: {
-              Authorization: `Bearer ${user.token}`,
-            },
-          }
-        );
-        setCommentCount(response.data.data.length);
+        // Fetch comment count using dedicated endpoint
+        const response = await commentsAPI.getCommentStatus(post.id);
+        setCommentCount(response.data.commentCount || 0);
       } catch (error) {
         console.error("Error fetching comment count:", error);
+        // Fallback to post data or 0
+        setCommentCount(post.comments_count || post.comments?.length || 0);
       }
     };
 
-    fetchCommentCount();
+    // Fetch comment count if post has an ID
+    if (post?.id) {
+      fetchCommentCount();
+    }
 
     // Check if post is already liked by user
     const checkLikeStatus = async () => {
-      setIsLiked(post.isLiked || false);
+      if (user?.id && post?.id) {
+        try {
+          const response = await likesAPI.getLikeStatus(post.id);
+          setIsLiked(response.data.isLiked);
+          setLikeCount(response.data.likeCount);
+        } catch (error) {
+          console.error("Error checking like status:", error);
+          // Fallback to post data
+          setIsLiked(post.isLiked || false);
+          setLikeCount(post.likes || 0);
+        }
+      } else if (post?.id) {
+        // If user not logged in, use post data
+        setIsLiked(post.isLiked || false);
+        setLikeCount(post.likes || 0);
+      }
+    };
+
+    // Check if post is saved by user
+    const checkSaveStatus = async () => {
+      if (user?.id && post?.id) {
+        try {
+          const response = await postsAPI.getSaveStatus(post.id);
+          setIsSaved(response.data.isSaved);
+        } catch (error) {
+          console.error("Error checking save status:", error);
+        }
+      }
     };
 
     checkLikeStatus();
-  }, [post.id, user, post.isLiked]);
+    checkSaveStatus();
+  }, [post?.id, user?.id]); // Only depend on post.id and user.id
 
   const handleLike = async () => {
-    setLoading(true); // Set loading to true when the like button is clicked
+    // Check if user is logged in by checking token in localStorage
+    if (!localStorage.getItem("token")) {
+      navigate("/login");
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/like`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${user.token}`,
-        },
-        body: JSON.stringify({
-          postId: post.id, // Hanya kirim postId, userId diambil dari token
-        }),
-      });
+      const response = await likesAPI.toggleLike(post.id);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to like post");
-      }
-
-      // Toggle like status based on response
-      const newIsLiked = data.message === "Post liked successfully.";
-      const newLikeCount = newIsLiked ? likeCount + 1 : likeCount - 1;
-
-      setIsLiked(newIsLiked);
-      setLikeCount(newLikeCount);
+      // Update state based on response
+      setIsLiked(response.data.isLiked);
+      setLikeCount(response.data.likeCount);
 
       // Update post in context
       updatePost({
         ...post,
-        likes: newLikeCount,
-        isLiked: newIsLiked,
+        likes: response.data.likeCount,
+        isLiked: response.data.isLiked,
       });
     } catch (error) {
       console.error("Error liking post:", error);
-      alert(error.message || "An error occurred while liking the post");
+      alert(
+        error.response?.data?.message ||
+          "An error occurred while liking the post",
+      );
     } finally {
-      setLoading(false); // Reset loading state after the request
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!localStorage.getItem("token")) {
+      navigate("/login");
+      return;
+    }
+
+    setSaveLoading(true);
+    try {
+      const response = await postsAPI.toggleSave(post.id);
+      setIsSaved(response.data.isSaved);
+    } catch (error) {
+      console.error("Error saving post:", error);
+      alert(
+        error.response?.data?.message ||
+          "An error occurred while saving the post",
+      );
+    } finally {
+      setSaveLoading(false);
     }
   };
 
@@ -86,48 +131,85 @@ export default function CardPost({ post }) {
     setShowComment(!showComment);
   };
 
-  const timeAgo = (timestamp) => {
-    const now = new Date();
-    const postTime = new Date(timestamp);
-    const diffInSeconds = Math.floor((now - postTime) / 1000);
+  const handleDeletePost = async () => {
+    if (!window.confirm("Are you sure you want to delete this post?")) {
+      return;
+    }
 
-    if (diffInSeconds < 60) {
-      return "Just now";
-    } else if (diffInSeconds < 3600) {
-      return `${Math.floor(diffInSeconds / 60)}m`;
-    } else if (diffInSeconds < 86400) {
-      return `${Math.floor(diffInSeconds / 3600)}h`;
-    } else {
-      return `${Math.floor(diffInSeconds / 86400)}d`;
+    setIsDeleting(true);
+    try {
+      await postsAPI.deletePost(post.id);
+      alert("Post deleted successfully!");
+      // Refresh posts after deletion
+      fetchPosts();
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      alert(error.message || "An error occurred while deleting the post");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
+  const formatPostTime = (timestamp) => {
+    const postTime = new Date(timestamp);
+    const hours = postTime.getHours().toString().padStart(2, "0");
+    const minutes = postTime.getMinutes().toString().padStart(2, "0");
+    return `${hours}:${minutes}`;
+  };
+
+  const handleDoubleClick = (e) => {
+    // Don't navigate if clicking on action buttons
+    if (e.target.closest("button")) return;
+    navigate(`/posts/${post.id}`);
+  };
+
   return (
-    <div className="border-b border-gray-500 h-auto">
+    <div
+      className="border-b border-gray-500 h-auto cursor-pointer"
+      onDoubleClick={handleDoubleClick}
+    >
       {/* Header */}
       <div className="flex flex-col">
         <div className="flex justify-between items-center my-1 px-4 pt-4">
           <div className="flex gap-2">
             <div className="w-12 h-12 rounded-lg overflow-hidden">
-              {post.profile_picture ? (
-                <img
-                  src={post.profile_picture}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <img
-                  src="https://ik.imagekit.io/fs0yie8l6/images%20(13).jpg?updatedAt=1736213176171"
-                  alt="Default Profile"
-                  className="w-full h-full object-cover"
-                />
-              )}
+              <img
+                src={
+                  post.profile_picture ||
+                  "https://ik.imagekit.io/fs0yie8l6/images%20(13).jpg?updatedAt=1736213176171"
+                }
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className="flex flex-col text-gray-400">
-              <p className="text-white">{post.user_name || "Anonymous"}</p>
+              <button
+                onClick={() => navigate(`/profile/${post.username}`)}
+                className="text-white hover:underline text-left"
+                title={post.user_name}
+              >
+                {post.user_name || "Anonymous"}
+              </button>
             </div>
           </div>
-          <div className="text-gray-400">
-            <p>{timeAgo(post.created_at) || "Just now"}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-gray-400">
+              {formatPostTime(post.created_at) || "00:00"}
+            </p>
+            {user?.id === post.user_id && (
+              <button
+                onClick={handleDeletePost}
+                disabled={isDeleting}
+                className="text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                title="Delete post"
+              >
+                {isDeleting ? (
+                  <i className="fa-solid fa-spinner fa-spin text-lg"></i>
+                ) : (
+                  <i className="fa-solid fa-trash text-lg"></i>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -152,19 +234,28 @@ export default function CardPost({ post }) {
       <div className="flex mt-2 gap-3 px-4 py-2">
         <button
           onClick={handleLike}
-          className={`flex items-center text-lg gap-2 hover:text-white ${
-            isLiked ? "text-red-500" : "text-gray-600"
-          }`}
-          disabled={loading} // Disable the button while loading
+          className={`flex items-center text-lg gap-2 transition-colors ${
+            isLiked
+              ? "text-red-500 hover:text-red-400"
+              : "text-gray-600 hover:text-white"
+          } ${loading ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+          disabled={loading}
+          title={
+            user?.id
+              ? isLiked
+                ? "Unlike this post"
+                : "Like this post"
+              : "Login to like posts"
+          }
         >
           {loading ? (
-            <i className="fa-solid fa-spinner fa-spin text-xl"></i> // Loading spinner
+            <i className="fa-solid fa-spinner fa-spin text-xl"></i>
           ) : (
             <i
               className={`fa-${isLiked ? "solid" : "regular"} fa-heart text-xl`}
             ></i>
           )}
-          <p className="text-xl">{likeCount}</p>
+          <span className="text-xl">{likeCount}</span>
         </button>
         <button
           onClick={handleShowComment}
@@ -172,6 +263,30 @@ export default function CardPost({ post }) {
         >
           <i className="fa-regular fa-comment text-xl"></i>
           <p className="text-xl">{commentCount}</p>
+        </button>
+        <button
+          onClick={handleSave}
+          className={`flex items-center text-lg gap-2 transition-colors ml-auto ${
+            isSaved
+              ? "text-yellow-400 hover:text-yellow-300"
+              : "text-gray-600 hover:text-white"
+          } ${saveLoading ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+          disabled={saveLoading}
+          title={
+            user?.id
+              ? isSaved
+                ? "Unsave this post"
+                : "Save this post"
+              : "Login to save posts"
+          }
+        >
+          {saveLoading ? (
+            <i className="fa-solid fa-spinner fa-spin text-xl"></i>
+          ) : (
+            <i
+              className={`fa-${isSaved ? "solid" : "regular"} fa-bookmark text-xl`}
+            ></i>
+          )}
         </button>
       </div>
 

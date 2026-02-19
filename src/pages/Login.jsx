@@ -2,40 +2,40 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Input from "../components/Input";
 import ButtonLogin from "../components/Button";
-import axios from "axios";
-import { useUser } from "../UserContext";
+import { authAPI } from "../api/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { setUser } = useUser(); // Access the user context
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/login`,
-        { email, password }
-      );
+      const response = await authAPI.login({ email, password });
 
       const result = response.data;
 
-      // Simpan user data beserta token
-      setUser({
+      // Simpan token ke localStorage untuk digunakan oleh interceptor
+      localStorage.setItem("token", result.token);
+
+      // Simpan user data ke context
+      login({
         id: result.data.id,
         name: result.data.name,
         email: result.data.email,
+        username: result.data.username,
         profile_picture: result.data.profile_picture,
         header_picture: result.data.header_picture,
         created_at: result.data.created_at,
-        token: result.token,
       });
 
       // Redirect ke halaman utama
-      navigate("/home");
+      navigate("/");
     } catch (error) {
       console.error("Login error:", error);
       setError(error.response?.data?.message || "Terjadi kesalahan saat login");
@@ -43,7 +43,7 @@ export default function Login() {
   };
 
   return (
-    <section className="h-screen bg-gray-950 flex items-center justify-center">
+    <section className="min-h-screen bg-gray-950 flex items-center justify-center py-6">
       <div className="w-full max-w-md p-6 rounded-lg shadow-lg">
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <h3 className="text-4xl text-left text-white mb-6">Login</h3>
@@ -61,14 +61,21 @@ export default function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <p className="text-right text-white">Forgot Password?</p>
+          <p className="text-right text-white">
+            <Link
+              to="/forgot-password"
+              className="hover:underline transition duration-300"
+            >
+              Forgot Password?
+            </Link>
+          </p>
           {error && <p className="text-red-500">{error}</p>}
           <ButtonLogin name={"Sign In"} type="submit" />
           <p className="flex gap-1 text-base text-white text-center">
             Don't have an account?
             <Link
               to="/register"
-              className="hover:underline transition duration-300"
+              className="text-teal-400 hover:text-teal-300 transition"
             >
               Register
             </Link>
