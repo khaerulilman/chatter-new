@@ -57,7 +57,6 @@ export default function Home() {
         <Navbar />
         <div className="h-screen flex gap-2 max-lg:gap-0 justify-center">
           <div className="flex flex-col max-md:hidden w-1/5 max-md:w-full max-lg:w-6/12 xl:mt-3">
-            <Search />
             {/* Tampilkan NewPost hanya jika bukan mobile */}
             {!isMobile && <NewPost disabled={isMobile} />}
           </div>

@@ -165,7 +165,6 @@ export default function Notifications() {
         <div className="h-screen flex gap-2 max-lg:gap-0 justify-center">
           {/* Left panel */}
           <div className="flex flex-col max-md:hidden w-1/5 max-md:w-full max-lg:w-6/12 xl:mt-3">
-            <Search />
             {!isMobile && <NewPost disabled={isMobile} />}
           </div>
 
