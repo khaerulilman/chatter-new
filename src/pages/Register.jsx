@@ -86,11 +86,7 @@ export default function Register() {
                 {error}
               </div>
             )}
-            <ButtonRegister
-              name={loading ? "Loading..." : "Sign Up"}
-              type="submit"
-              disabled={loading}
-            />
+            <ButtonRegister name={"Sign Up"} type="submit" loading={loading} />
           </form>
           <br></br>
           <p className="flex gap-1 text-base text-white text-center">
