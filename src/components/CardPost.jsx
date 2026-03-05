@@ -17,6 +17,7 @@ export default function CardPost({ post }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [showFullImage, setShowFullImage] = useState(false);
 
   useEffect(() => {
     // Fetch comment count for the post
@@ -150,6 +151,32 @@ export default function CardPost({ post }) {
     }
   };
 
+  const renderContent = (text) => {
+    if (!text) return "No content available.";
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.split("\n").map((line, i) => (
+      <React.Fragment key={i}>
+        {i > 0 && <br />}
+        {line.split(urlRegex).map((part, j) =>
+          /^https?:\/\//.test(part) ? (
+            <a
+              key={j}
+              href={part}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:underline break-all"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {part}
+            </a>
+          ) : (
+            part
+          ),
+        )}
+      </React.Fragment>
+    ));
+  };
+
   const formatPostTime = (timestamp) => {
     const postTime = new Date(timestamp);
     const hours = postTime.getHours().toString().padStart(2, "0");
@@ -216,16 +243,19 @@ export default function CardPost({ post }) {
 
       {/* Content */}
       <div className="flex flex-col text-justify text-white my-3 px-4">
-        <p>{post.content || "No content available."}</p>
+        <p className="whitespace-pre-wrap break-words">
+          {renderContent(post.content)}
+        </p>
       </div>
 
       {/* Media */}
       {post.media_url && (
-        <div className="w-full h-auto px-4">
+        <div className="w-full h-auto px-4 py-2">
           <img
             src={post.media_url}
             alt="Post Media"
-            className="h-2/6 rounded-md shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.1),0px_1px_0px_0px_rgba(25,28,33,0.02),0px_0px_0px_1px_rgba(25,28,33,0.08)]"
+            onClick={() => setShowFullImage(true)}
+            className="max-w-xs h-64 object-cover rounded-md shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.1),0px_1px_0px_0px_rgba(25,28,33,0.02),0px_0px_0px_1px_rgba(25,28,33,0.08)] cursor-pointer hover:opacity-80 transition-opacity"
           />
         </div>
       )}
@@ -292,6 +322,31 @@ export default function CardPost({ post }) {
 
       {/* Comments */}
       {showComment && <CommentPost postId={post.id} />}
+
+      {/* Full-Size Image Modal */}
+      {showFullImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setShowFullImage(false)}
+        >
+          <div
+            className="relative max-w-4xl max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={post.media_url}
+              alt="Post Media Full"
+              className="w-full h-full object-contain rounded-lg"
+            />
+            <button
+              onClick={() => setShowFullImage(false)}
+              className="absolute top-4 right-4 bg-gray-800/80 hover:bg-gray-700 rounded-full w-10 h-10 flex items-center justify-center text-white"
+            >
+              <i className="fa-solid fa-xmark text-lg"></i>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import ChatDetailComponent from "../components/ChatDetailComponent";
 import { useChats } from "../context/ChatsContext";
+import Loading from "../components/Loading";
 
 function formatTime(dateStr) {
   if (!dateStr) return "";
@@ -67,7 +68,7 @@ export default function Chats() {
         <div className="flex-1 overflow-y-auto scrollbar-hide">
           {loadingConversations ? (
             <div className="flex justify-center items-center mt-16">
-              <i className="fa-solid fa-spinner fa-spin text-gray-400 text-2xl"></i>
+              <Loading />
             </div>
           ) : conversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center mt-24 text-gray-500 gap-3">

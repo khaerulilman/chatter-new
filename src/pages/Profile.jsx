@@ -1,4 +1,3 @@
-import NewPost from "../components/NewPost";
 import { useState, useEffect, useCallback } from "react";
 import {
   useParams,
@@ -6,14 +5,13 @@ import {
   useSearchParams,
   useNavigate,
 } from "react-router-dom";
-import Navbar from "../components/Navbar";
-import Sidebar from "../components/Sidebar.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { usersAPI, postsAPI, followsAPI } from "../api/api.ts";
 import { useChats } from "../context/ChatsContext.jsx";
 import CardPost from "../components/CardPost.jsx";
 import CardPeople from "../components/CardPeople.jsx";
-import Search from "../components/Search.jsx";
+import Loading from "../components/Loading.jsx";
+import MainLayout from "../components/MainLayout.jsx";
 
 export default function Profile() {
   const { username } = useParams();
@@ -208,295 +206,267 @@ export default function Profile() {
     fetchSaved();
   }, [activeTab, isOwner]);
 
-  if (loading) {
-    return (
-      <section className="h-screen bg-gray-950 flex items-center justify-center text-white">
-        Loading...
-      </section>
-    );
-  }
-
-  if (error) {
-    return (
-      <section className="h-screen bg-gray-950 flex items-center justify-center text-white">
-        {error}
-      </section>
-    );
-  }
-
   const currentList = activeTab === "followers" ? followersList : followingList;
 
   return (
-    <>
-      <section className="h-screen bg-gray-950 scrollbar-hide overflow-auto">
-        <Navbar onClick={() => {}} />
-        <div className="h-screen bg-gray-950 flex gap-2 max-lg:gap-0 justify-center ">
-          <div className="flex flex-col max-lg:hidden w-1/5 max-md:w-full max-lg:w-6/12 xl:mt-3">
-            <NewPost />
-          </div>
+    <MainLayout>
+      <div className="py-3 px-4 text-white flex border-b border-gray-700">
+        {activeTab !== "posts" ? (
+          <button
+            onClick={() => setSearchParams({ tab: "posts" })}
+            className="text-lg"
+          >
+            <i className="fa-solid fa-arrow-left mr-2"></i> Back
+          </button>
+        ) : (
+          <Link to="/" className="text-lg">
+            <i className="fa-solid fa-arrow-left mr-2"></i> Back
+          </Link>
+        )}
+      </div>
 
-          <div className="flex flex-col w-5/12 xl:border xl:border-gray-700 max-lg:border-x max-md:border-r max-md:border-l-0 max-lg:w-full max-lg:border-gray-500 xl:rounded-md xl:mt-3 ">
-            <div className="py-3 px-4 text-white flex border-b border-gray-700">
-              {activeTab !== "posts" ? (
+      {loading ? (
+        <Loading />
+      ) : error ? (
+        <div className="flex-1 flex items-center justify-center text-white">
+          {error}
+        </div>
+      ) : (
+        <>
+          <div className="overflow-auto scrollbar-hide">
+            {/* Profile header */}
+            <div className="flex flex-col border-b border-gray-700">
+              {/* Cover */}
+              <div className="flex h-40 bg-slate-900 w-full">
+                {profileUser?.header_picture ? (
+                  <img
+                    src={profileUser.header_picture}
+                    alt="Header"
+                    className="flex w-full object-cover"
+                  />
+                ) : (
+                  <img
+                    src="https://ik.imagekit.io/fs0yie8l6/smooth-gray-background-with-high-quality_53876-124606.png?updatedAt=1736214212559"
+                    alt="Default Header"
+                    className="flex w-full object-cover"
+                  />
+                )}
+              </div>
+
+              <div className="h-auto rounded-lg mx-6 -mt-12 flex flex-col justify-between pb-4">
+                {/* Avatar + action buttons */}
+                <div className="flex justify-between items-end">
+                  <img
+                    src={
+                      profileUser?.profile_picture ||
+                      "https://ik.imagekit.io/fs0yie8l6/images%20(13).jpg?updatedAt=1736213176171"
+                    }
+                    alt="Profile"
+                    className="flex w-24 h-24 object-cover rounded-lg border-4 border-gray-950"
+                  />
+                  <div className="mt-2 flex gap-2">
+                    {isOwner ? (
+                      <Link
+                        to="/edit-profile"
+                        className="text-white p-4 h-9 w-auto bg-gray-600 flex items-center rounded-lg text-sm"
+                      >
+                        Edit Profile
+                      </Link>
+                    ) : loggedInUser ? (
+                      <>
+                        <button
+                          onClick={handleFollowProfile}
+                          disabled={followLoading}
+                          className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
+                            isFollowingProfile
+                              ? "bg-transparent border border-gray-500 text-gray-300 hover:border-red-500 hover:text-red-400"
+                              : "bg-teal-600 hover:bg-teal-500 text-white"
+                          } disabled:opacity-50`}
+                        >
+                          {followLoading
+                            ? "..."
+                            : isFollowingProfile
+                              ? "Following"
+                              : "Follow"}
+                        </button>
+                        <button
+                          onClick={handleMessageClick}
+                          disabled={messageLoading}
+                          className="px-5 py-2 rounded-full text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors disabled:opacity-50"
+                        >
+                          <i className="fa-solid fa-message text-[16px]"></i>
+                        </button>
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Name + username */}
+                <div className="text-white mt-3">
+                  <h3 className="font-medium text-xl">{profileUser?.name}</h3>
+                  <p className="text-gray-400 text-sm">
+                    @{profileUser?.username}
+                  </p>
+                </div>
+
+                {/* Follower / Following counts */}
+                <div className="flex gap-5 mt-3">
+                  <button
+                    onClick={() => setSearchParams({ tab: "following" })}
+                    className="text-sm text-gray-400 hover:text-white transition-colors"
+                  >
+                    <span className="text-white font-semibold">
+                      {followStats.followingCount}
+                    </span>{" "}
+                    Following
+                  </button>
+                  <button
+                    onClick={() => setSearchParams({ tab: "followers" })}
+                    className="text-sm text-gray-400 hover:text-white transition-colors"
+                  >
+                    <span className="text-white font-semibold">
+                      {followStats.followerCount}
+                    </span>{" "}
+                    Followers
+                  </button>
+                </div>
+
+                {/* Joined */}
+                <div className="flex border border-gray-700 h-16 mt-4 rounded-lg">
+                  <div className="flex flex-col justify-center ml-4 text-gray-500">
+                    <h3 className="text-sm">Joined</h3>
+                    <p className="text-sm">
+                      {formatProfileDate(profileUser?.created_at)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Tab Navigation */}
+            <div className="flex border-b border-gray-700">
+              <button
+                onClick={() => setSearchParams({ tab: "posts" })}
+                className={`px-6 py-3 text-sm font-medium relative ${
+                  activeTab === "posts"
+                    ? "text-white"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Posts
+                {activeTab === "posts" && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />
+                )}
+              </button>
+              <button
+                onClick={() => setSearchParams({ tab: "followers" })}
+                className={`px-6 py-3 text-sm font-medium relative ${
+                  activeTab === "followers"
+                    ? "text-white"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Followers
+                {activeTab === "followers" && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />
+                )}
+              </button>
+              <button
+                onClick={() => setSearchParams({ tab: "following" })}
+                className={`px-6 py-3 text-sm font-medium relative ${
+                  activeTab === "following"
+                    ? "text-white"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Following
+                {activeTab === "following" && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />
+                )}
+              </button>
+              {isOwner && (
                 <button
-                  onClick={() => setSearchParams({ tab: "posts" })}
-                  className="text-lg"
+                  onClick={() => setSearchParams({ tab: "saved" })}
+                  className={`px-6 py-3 text-sm font-medium relative ${
+                    activeTab === "saved"
+                      ? "text-white"
+                      : "text-gray-400 hover:text-white"
+                  }`}
                 >
-                  <i className="fa-solid fa-arrow-left mr-2"></i> Back
+                  Saved
+                  {activeTab === "saved" && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-yellow-400 rounded-full" />
+                  )}
                 </button>
-              ) : (
-                <Link to="/" className="text-lg">
-                  <i className="fa-solid fa-arrow-left mr-2"></i> Back
-                </Link>
               )}
             </div>
 
+            {/* Tab Content */}
             <div className="overflow-auto scrollbar-hide">
-              {/* Profile header */}
-              <div className="flex flex-col border-b border-gray-700">
-                {/* Cover */}
-                <div className="flex h-40 bg-slate-900 w-full">
-                  {profileUser?.header_picture ? (
-                    <img
-                      src={profileUser.header_picture}
-                      alt="Header"
-                      className="flex w-full object-cover"
-                    />
+              {/* Posts tab */}
+              {activeTab === "posts" && (
+                <div>
+                  {postsLoading ? (
+                    <Loading />
+                  ) : userPosts.length > 0 ? (
+                    userPosts.map((post) => (
+                      <CardPost key={post.id} post={post} />
+                    ))
                   ) : (
-                    <img
-                      src="https://ik.imagekit.io/fs0yie8l6/smooth-gray-background-with-high-quality_53876-124606.png?updatedAt=1736214212559"
-                      alt="Default Header"
-                      className="flex w-full object-cover"
-                    />
+                    <div className="flex items-center justify-center py-8 text-gray-400">
+                      No posts yet
+                    </div>
                   )}
                 </div>
+              )}
 
-                <div className="h-auto rounded-lg mx-6 -mt-12 flex flex-col justify-between pb-4">
-                  {/* Avatar + action buttons */}
-                  <div className="flex justify-between items-end">
-                    <img
-                      src={
-                        profileUser?.profile_picture ||
-                        "https://ik.imagekit.io/fs0yie8l6/images%20(13).jpg?updatedAt=1736213176171"
-                      }
-                      alt="Profile"
-                      className="flex w-24 h-24 object-cover rounded-lg border-4 border-gray-950"
-                    />
-                    <div className="mt-2 flex gap-2">
-                      {isOwner ? (
-                        <Link
-                          to="/edit-profile"
-                          className="text-white p-4 h-9 w-auto bg-gray-600 flex items-center rounded-lg text-sm"
-                        >
-                          Edit Profile
-                        </Link>
-                      ) : loggedInUser ? (
-                        <>
-                          <button
-                            onClick={handleFollowProfile}
-                            disabled={followLoading}
-                            className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
-                              isFollowingProfile
-                                ? "bg-transparent border border-gray-500 text-gray-300 hover:border-red-500 hover:text-red-400"
-                                : "bg-teal-600 hover:bg-teal-500 text-white"
-                            } disabled:opacity-50`}
-                          >
-                            {followLoading
-                              ? "..."
-                              : isFollowingProfile
-                                ? "Following"
-                                : "Follow"}
-                          </button>
-                          <button
-                            onClick={handleMessageClick}
-                            disabled={messageLoading}
-                            className="px-5 py-2 rounded-full text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors disabled:opacity-50"
-                          >
-                            <i className="fa-solid fa-message text-[16px]"></i>
-                          </button>
-                        </>
-                      ) : null}
+              {/* Followers / Following tab */}
+              {/* Saved posts tab — only visible to owner */}
+              {activeTab === "saved" && isOwner && (
+                <div>
+                  {savedLoading ? (
+                    <Loading text="Loading saved posts..." />
+                  ) : savedPosts.length > 0 ? (
+                    savedPosts.map((post) => (
+                      <CardPost key={post.id} post={post} />
+                    ))
+                  ) : (
+                    <div className="flex items-center justify-center py-8 text-gray-400">
+                      No saved posts yet
                     </div>
-                  </div>
+                  )}
+                </div>
+              )}
 
-                  {/* Name + username */}
-                  <div className="text-white mt-3">
-                    <h3 className="font-medium text-xl">{profileUser?.name}</h3>
-                    <p className="text-gray-400 text-sm">
-                      @{profileUser?.username}
-                    </p>
-                  </div>
-
-                  {/* Follower / Following counts */}
-                  <div className="flex gap-5 mt-3">
-                    <button
-                      onClick={() => setSearchParams({ tab: "following" })}
-                      className="text-sm text-gray-400 hover:text-white transition-colors"
-                    >
-                      <span className="text-white font-semibold">
-                        {followStats.followingCount}
-                      </span>{" "}
-                      Following
-                    </button>
-                    <button
-                      onClick={() => setSearchParams({ tab: "followers" })}
-                      className="text-sm text-gray-400 hover:text-white transition-colors"
-                    >
-                      <span className="text-white font-semibold">
-                        {followStats.followerCount}
-                      </span>{" "}
-                      Followers
-                    </button>
-                  </div>
-
-                  {/* Joined */}
-                  <div className="flex border border-gray-700 h-16 mt-4 rounded-lg">
-                    <div className="flex flex-col justify-center ml-4 text-gray-500">
-                      <h3 className="text-sm">Joined</h3>
+              {(activeTab === "followers" || activeTab === "following") && (
+                <div>
+                  {listsLoading ? (
+                    <Loading />
+                  ) : currentList.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-500">
+                      <i className="fa-solid fa-user-slash text-4xl" />
                       <p className="text-sm">
-                        {formatProfileDate(profileUser?.created_at)}
+                        {activeTab === "followers"
+                          ? "Belum ada followers"
+                          : "Belum mengikuti siapapun"}
                       </p>
                     </div>
-                  </div>
+                  ) : (
+                    currentList.map((person) => (
+                      <CardPeople
+                        key={person.id}
+                        person={person}
+                        isFollowing={followingIds.has(person.id)}
+                        onFollowChange={handleFollowChange}
+                      />
+                    ))
+                  )}
                 </div>
-              </div>
-
-              {/* Tab Navigation */}
-              <div className="flex border-b border-gray-700">
-                <button
-                  onClick={() => setSearchParams({ tab: "posts" })}
-                  className={`px-6 py-3 text-sm font-medium relative ${
-                    activeTab === "posts"
-                      ? "text-white"
-                      : "text-gray-400 hover:text-white"
-                  }`}
-                >
-                  Posts
-                  {activeTab === "posts" && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />
-                  )}
-                </button>
-                <button
-                  onClick={() => setSearchParams({ tab: "followers" })}
-                  className={`px-6 py-3 text-sm font-medium relative ${
-                    activeTab === "followers"
-                      ? "text-white"
-                      : "text-gray-400 hover:text-white"
-                  }`}
-                >
-                  Followers
-                  {activeTab === "followers" && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />
-                  )}
-                </button>
-                <button
-                  onClick={() => setSearchParams({ tab: "following" })}
-                  className={`px-6 py-3 text-sm font-medium relative ${
-                    activeTab === "following"
-                      ? "text-white"
-                      : "text-gray-400 hover:text-white"
-                  }`}
-                >
-                  Following
-                  {activeTab === "following" && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />
-                  )}
-                </button>
-                {isOwner && (
-                  <button
-                    onClick={() => setSearchParams({ tab: "saved" })}
-                    className={`px-6 py-3 text-sm font-medium relative ${
-                      activeTab === "saved"
-                        ? "text-white"
-                        : "text-gray-400 hover:text-white"
-                    }`}
-                  >
-                    Saved
-                    {activeTab === "saved" && (
-                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-yellow-400 rounded-full" />
-                    )}
-                  </button>
-                )}
-              </div>
-
-              {/* Tab Content */}
-              <div className="overflow-auto scrollbar-hide">
-                {/* Posts tab */}
-                {activeTab === "posts" && (
-                  <div>
-                    {postsLoading ? (
-                      <div className="flex items-center justify-center py-8 text-white">
-                        Loading posts...
-                      </div>
-                    ) : userPosts.length > 0 ? (
-                      userPosts.map((post) => (
-                        <CardPost key={post.id} post={post} />
-                      ))
-                    ) : (
-                      <div className="flex items-center justify-center py-8 text-gray-400">
-                        No posts yet
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Followers / Following tab */}
-                {/* Saved posts tab — only visible to owner */}
-                {activeTab === "saved" && isOwner && (
-                  <div>
-                    {savedLoading ? (
-                      <div className="flex items-center justify-center py-8 text-white">
-                        Loading saved posts...
-                      </div>
-                    ) : savedPosts.length > 0 ? (
-                      savedPosts.map((post) => (
-                        <CardPost key={post.id} post={post} />
-                      ))
-                    ) : (
-                      <div className="flex items-center justify-center py-8 text-gray-400">
-                        No saved posts yet
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {(activeTab === "followers" || activeTab === "following") && (
-                  <div>
-                    {listsLoading ? (
-                      <div className="flex justify-center py-12">
-                        <div className="w-6 h-6 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" />
-                      </div>
-                    ) : currentList.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-500">
-                        <i className="fa-solid fa-user-slash text-4xl" />
-                        <p className="text-sm">
-                          {activeTab === "followers"
-                            ? "Belum ada followers"
-                            : "Belum mengikuti siapapun"}
-                        </p>
-                      </div>
-                    ) : (
-                      currentList.map((person) => (
-                        <CardPeople
-                          key={person.id}
-                          person={person}
-                          isFollowing={followingIds.has(person.id)}
-                          onFollowChange={handleFollowChange}
-                        />
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
+              )}
             </div>
           </div>
-
-          {/* Sidebar */}
-          <div className="max-md:block max-md:h-full max-lg:w-16 w-1/6">
-            <Sidebar />
-          </div>
-        </div>
-      </section>
-    </>
+        </>
+      )}
+    </MainLayout>
   );
 }

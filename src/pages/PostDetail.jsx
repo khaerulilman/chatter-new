@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
-import NewPost from "../components/NewPost";
-import Navbar from "../components/Navbar";
-import Search from "../components/Search";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import MainLayout from "../components/MainLayout";
 import CardPost from "../components/CardPost";
 import { postsAPI, commentsAPI, likesAPI } from "../api/api";
+import Loading from "../components/Loading";
 
 export default function PostDetail() {
   const { postId } = useParams();
@@ -61,28 +59,30 @@ export default function PostDetail() {
     }
   }, [postId]);
 
-  // Check screen size for mobile view
-  const isMobile = window.innerWidth < 600;
+  const header = (
+    <div className="py-3 px-4 text-white flex gap-2 border-b border-gray-500">
+      <button
+        onClick={() => navigate("/")}
+        className="hover:text-gray-400 transition duration-300"
+      >
+        <i className="fa-solid fa-arrow-left text-lg"></i>
+      </button>
+      <button className="text-lg">
+        <i className="fa-solid fa-rss mr-2"></i> Post Detail
+      </button>
+    </div>
+  );
 
-  if (loading) {
-    return (
-      <section className="h-screen bg-gray-950 scrollbar-hide overflow-auto">
-        <Navbar />
-        <div className="h-screen flex gap-2 max-lg:gap-0 justify-center items-center">
-          <div className="text-white text-center">
-            <i className="fa-solid fa-spinner fa-spin text-4xl mb-4"></i>
-            <p>Loading post...</p>
-          </div>
+  return (
+    <MainLayout>
+      {header}
+      {loading && (
+        <div className="flex justify-center items-center h-40">
+          <Loading />
         </div>
-      </section>
-    );
-  }
-
-  if (error || !post) {
-    return (
-      <section className="h-screen bg-gray-950 scrollbar-hide overflow-auto">
-        <Navbar />
-        <div className="h-screen flex gap-2 max-lg:gap-0 justify-center items-center">
+      )}
+      {!loading && (error || !post) && (
+        <div className="flex-1 flex justify-center items-center">
           <div className="text-white text-center">
             <p className="text-red-500 mb-4">{error || "Post not found"}</p>
             <button
@@ -93,45 +93,12 @@ export default function PostDetail() {
             </button>
           </div>
         </div>
-      </section>
-    );
-  }
-
-  return (
-    <>
-      <section className="h-screen bg-gray-950 scrollbar-hide overflow-auto">
-        <Navbar />
-        <div className="h-screen flex gap-2 max-lg:gap-0 justify-center">
-          <div className="flex flex-col max-md:hidden w-1/5 max-md:w-full max-lg:w-6/12 xl:mt-3">
-            <Search />
-            {/* Tampilkan NewPost hanya jika bukan mobile */}
-            {!isMobile && <NewPost disabled={isMobile} />}
-          </div>
-
-          <div className="flex flex-col w-5/12 xl:border xl:border-gray-500 max-lg:border-x max-md:border-r max-md:border-l-0 max-lg:w-full max-lg:border-gray-500 xl:rounded-md xl:mt-3">
-            <div className="py-3 px-4 text-white flex gap-2 border-b border-gray-500">
-              <button
-                onClick={() => navigate("/")}
-                className="hover:text-gray-400 transition duration-300"
-              >
-                <i className="fa-solid fa-arrow-left text-lg"></i>
-              </button>
-              <button className="text-lg">
-                <i className="fa-solid fa-rss mr-2"></i> Post Detail
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-auto scrollbar-hide">
-              <CardPost post={post} />
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="max-md:block max-md:h-full max-lg:w-16 w-1/6">
-            <Sidebar />
-          </div>
+      )}
+      {!loading && post && (
+        <div className="flex-1 overflow-auto scrollbar-hide">
+          <CardPost post={post} />
         </div>
-      </section>
-    </>
+      )}
+    </MainLayout>
   );
 }
