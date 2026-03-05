@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import EmojiPicker from "emoji-picker-react";
 import { useAuth } from "../context/AuthContext";
 import { usePosts } from "../context/PostsContext";
@@ -14,6 +14,7 @@ export default function NewPost() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [currentUser, setCurrentUser] = useState(user);
+  const emojiPickerRef = useRef(null);
 
   // Sync currentUser whenever user context changes
   useEffect(() => {
@@ -21,6 +22,23 @@ export default function NewPost() {
       setCurrentUser(user);
     }
   }, [user]);
+
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    if (showEmojiPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showEmojiPicker]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -232,7 +250,7 @@ export default function NewPost() {
         </div>
 
         {showEmojiPicker && (
-          <div className="absolute z-10 mt-20">
+          <div ref={emojiPickerRef} className="absolute z-10 mt-20">
             <EmojiPicker
               onEmojiClick={(emojiData) => {
                 setPostContent((prev) => prev + emojiData.emoji);

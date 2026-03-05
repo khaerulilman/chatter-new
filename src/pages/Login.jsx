@@ -9,11 +9,14 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
 
     try {
       const response = await authAPI.login({ email, password });
@@ -39,6 +42,8 @@ export default function Login() {
     } catch (error) {
       console.error("Login error:", error);
       setError(error.response?.data?.message || "Terjadi kesalahan saat login");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,6 +58,7 @@ export default function Login() {
             type="text"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            disabled={loading}
           />
           <Input
             icon="fa-solid fa-lock"
@@ -60,6 +66,7 @@ export default function Login() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={loading}
           />
           <p className="text-right text-white">
             <Link
@@ -70,7 +77,7 @@ export default function Login() {
             </Link>
           </p>
           {error && <p className="text-red-500">{error}</p>}
-          <ButtonLogin name={"Sign In"} type="submit" />
+          <ButtonLogin name={"Sign In"} type="submit" loading={loading} />
           <p className="flex gap-1 text-base text-white text-center">
             Don't have an account?
             <Link
