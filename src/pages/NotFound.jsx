@@ -1,6 +1,5 @@
 import Sidebar from "../components/Sidebar.jsx";
 import NewPost from "../components/NewPost";
-import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
 
 export default function NotFound() {
@@ -16,7 +15,6 @@ export default function NotFound() {
   return (
     <>
       <section className="h-screen bg-gray-950 scrollbar-hide overflow-auto">
-        <Navbar />
         <div className="h-screen flex gap-2 max-lg:gap-0 justify-center">
           <div className="flex flex-col max-md:hidden w-1/5 max-md:w-full max-lg:w-6/12 xl:mt-3">
             <div className="px-4 text-white flex rounded-lg">

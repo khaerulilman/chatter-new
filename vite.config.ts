@@ -47,6 +47,22 @@ const manifestForPlugIn: Partial<VitePWAOptions> = {
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), VitePWA(manifestForPlugIn)],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          "vendor-axios": ["axios"],
+          "vendor-emoji": ["emoji-picker-react"],
+          "vendor-fontawesome": [
+            "@fortawesome/fontawesome-svg-core",
+            "@fortawesome/free-solid-svg-icons",
+            "@fortawesome/react-fontawesome",
+          ],
+        },
+      },
+    },
+  },
   server: {
     proxy: {
       "/api/gnews": {

@@ -290,7 +290,7 @@ export default function CardPost({ post }) {
 
   return (
     <div
-      className="border-b border-gray-500 h-auto cursor-pointer"
+      className="border-b border-gray-500 h-auto cursor-pointer overflow-hidden"
       onDoubleClick={handleDoubleClick}
     >
       {/* Header */}

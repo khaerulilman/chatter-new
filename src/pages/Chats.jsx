@@ -60,6 +60,12 @@ export default function Chats() {
       >
         {/* Header */}
         <div className="px-5 py-4 border-b border-gray-700 flex items-center gap-3">
+          <button
+            onClick={() => navigate("/")}
+            className="text-gray-400 hover:text-gray-400 transition duration-300"
+          >
+            <i className="fa-solid fa-arrow-left text-lg"></i>
+          </button>
           <i className="fa-solid fa-message text-white text-xl"></i>
           <h1 className="text-white text-xl font-semibold">Messages</h1>
         </div>

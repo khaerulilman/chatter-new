@@ -83,10 +83,10 @@ export default function CommentPost({ postId }) {
   };
 
   return (
-    <div className="h-auto border-t mt-2 border-gray-600 flex flex-col">
+    <div className="h-auto border-t mt-2 border-gray-600 flex flex-col w-full overflow-hidden">
       {/* Comment Input */}
-      <div className="flex items-center mb-2 pt-4 pb-3 px-8 gap-3">
-        <div className="w-10 h-10 rounded-lg overflow-hidden">
+      <div className="flex items-center mb-2 pt-4 pb-3 px-4 gap-3">
+        {/* <div className="w-10 h-10 rounded-lg overflow-hidden">
           <img
             src={
               user?.profile_picture ||
@@ -95,7 +95,7 @@ export default function CommentPost({ postId }) {
             alt={user?.name || "User"}
             className="w-full h-full object-cover"
           />
-        </div>
+        </div> */}
 
         <input
           type="text"
@@ -118,7 +118,7 @@ export default function CommentPost({ postId }) {
       {comments.map((comment) => (
         <div
           key={comment.id}
-          className="flex flex-col px-8 py-4 border-t-gray-800 border-t"
+          className="flex flex-col px-4 py-4 border-t-gray-800 border-t"
         >
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
@@ -151,7 +151,7 @@ export default function CommentPost({ postId }) {
               )}
             </div>
           </div>
-          <div className="text-white text-sm mt-2 px-12">
+          <div className="text-white text-sm mt-2 pl-12">
             <p>{comment.content}</p>
           </div>
         </div>
