@@ -49,6 +49,11 @@ export default defineConfig({
   plugins: [react(), VitePWA(manifestForPlugIn)],
   server: {
     proxy: {
+      "/api/gnews": {
+        target: "https://gnews.io/api/v4",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/gnews/, ""),
+      },
       "/api": "http://localhost:3000/api/auth",
     },
   },
