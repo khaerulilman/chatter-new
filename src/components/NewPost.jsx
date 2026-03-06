@@ -10,11 +10,11 @@ export default function NewPost({ onClose }) {
   const { user } = useAuth();
   const { addPost } = usePosts();
   const navigate = useNavigate();
-  const [fileImage, setFileImage] = useState(null);
+  const [fileImages, setFileImages] = useState([]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [postContent, setPostContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [previewImage, setPreviewImage] = useState(null);
+  const [previewImages, setPreviewImages] = useState([]);
   const [currentUser, setCurrentUser] = useState(user);
   const emojiPickerRef = useRef(null);
 
@@ -45,42 +45,102 @@ export default function NewPost({ onClose }) {
     };
   }, [showEmojiPicker]);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const MAX_FILES = 30;
 
+  // Compress image using canvas — returns a compressed File
+  const compressImage = (file, maxWidth = 1920, quality = 0.8) => {
+    return new Promise((resolve) => {
+      if (!file.type.startsWith("image/") || file.type === "image/gif") {
+        resolve(file);
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            const compressed = new File([blob], file.name, {
+              type: "image/jpeg",
+              lastModified: Date.now(),
+            });
+            resolve(compressed);
+          },
+          "image/jpeg",
+          quality,
+        );
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleImageChange = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    const remaining = MAX_FILES - fileImages.length;
+    if (remaining <= 0) {
+      alert(`Maksimal ${MAX_FILES} gambar per post.`);
+      e.target.value = "";
+      return;
+    }
+
+    const filesToAdd = files.slice(0, remaining);
     const supportedTypes = [
       "image/jpeg",
       "image/png",
       "image/gif",
-      "video/mp4",
+      "image/webp",
     ];
-    if (!supportedTypes.includes(file.type)) {
-      alert(
-        "Format file tidak didukung. Gunakan gambar (jpeg, png, gif) atau video (mp4).",
-      );
+    const MAX_SIZE = 20 * 1024 * 1024;
+
+    const validFiles = filesToAdd.filter((file) => {
+      if (!supportedTypes.includes(file.type)) {
+        alert(
+          `Format file "${file.name}" tidak didukung. Gunakan jpeg, png, gif, atau webp.`,
+        );
+        return false;
+      }
+      if (file.size > MAX_SIZE) {
+        alert(`File "${file.name}" terlalu besar. Maksimal 20MB.`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) {
+      e.target.value = "";
       return;
     }
 
-    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
-    if (file.size > MAX_SIZE) {
-      alert("Ukuran file terlalu besar. Maksimal 10MB.");
-      return;
-    }
+    const compressedFiles = await Promise.all(
+      validFiles.map((file) => compressImage(file)),
+    );
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreviewImage(reader.result);
-      console.log("Preview Image:", reader.result);
-    };
-    reader.readAsDataURL(file);
-    setFileImage(file);
+    compressedFiles.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImages((prev) => [...prev, reader.result]);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    setFileImages((prev) => [...prev, ...compressedFiles]);
+    e.target.value = "";
   };
 
   const resetForm = () => {
     setPostContent("");
-    setFileImage(null);
-    setPreviewImage(null);
+    setFileImages([]);
+    setPreviewImages([]);
     setShowEmojiPicker(false);
   };
 
@@ -91,7 +151,7 @@ export default function NewPost({ onClose }) {
       return;
     }
 
-    if (!postContent.trim() && !fileImage) {
+    if (!postContent.trim() && fileImages.length === 0) {
       alert("Silakan tambahkan konten atau gambar untuk post Anda");
       return;
     }
@@ -100,11 +160,11 @@ export default function NewPost({ onClose }) {
 
     try {
       const formData = new FormData();
-      formData.append("content", postContent.trim()); // Hanya kirim content
+      formData.append("content", postContent.trim());
 
-      if (fileImage) {
-        formData.append("media", fileImage); // Menambahkan file media jika ada
-      }
+      fileImages.forEach((file) => {
+        formData.append("media", file);
+      });
 
       const response = await postsAPI.createPost(formData);
 
@@ -113,6 +173,7 @@ export default function NewPost({ onClose }) {
         id: response.data.post.id,
         content: response.data.post.content,
         media_url: response.data.post.media_url,
+        media_urls: response.data.post.media_urls,
         user_name: currentUser.name,
         user_id: currentUser.id,
         profile_picture: currentUser.profile_picture,
@@ -136,9 +197,9 @@ export default function NewPost({ onClose }) {
     }
   };
 
-  const removeImage = () => {
-    setFileImage(null);
-    setPreviewImage(null);
+  const removeImage = (index) => {
+    setFileImages((prev) => prev.filter((_, i) => i !== index));
+    setPreviewImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -173,19 +234,28 @@ export default function NewPost({ onClose }) {
             autoFocus
           />
 
-          {previewImage && (
-            <div className="h-auto w-full px-5 pb-3 relative">
-              <img
-                src={previewImage}
-                alt="Upload preview"
-                className="rounded-lg h-40 w-full object-cover"
-              />
-              <button
-                onClick={removeImage}
-                className="absolute top-2 right-7 bg-gray-800/80 hover:bg-gray-700 rounded-full w-7 h-7 flex items-center justify-center"
-              >
-                <i className="fa-solid fa-times text-white text-sm"></i>
-              </button>
+          {previewImages.length > 0 && (
+            <div className="px-5 pb-3">
+              <div className="grid grid-cols-3 gap-1.5 max-h-60 overflow-y-auto scrollbar-hide rounded-lg">
+                {previewImages.map((preview, index) => (
+                  <div key={index} className="relative aspect-square">
+                    <img
+                      src={preview}
+                      alt={`Upload preview ${index + 1}`}
+                      className="rounded-md w-full h-full object-cover"
+                    />
+                    <button
+                      onClick={() => removeImage(index)}
+                      className="absolute top-1 right-1 bg-gray-800/80 hover:bg-gray-700 rounded-full w-5 h-5 flex items-center justify-center"
+                    >
+                      <i className="fa-solid fa-times text-white text-[10px]"></i>
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <p className="text-gray-500 text-xs mt-1.5">
+                {fileImages.length}/{MAX_FILES} gambar
+              </p>
             </div>
           )}
 
@@ -193,11 +263,12 @@ export default function NewPost({ onClose }) {
             <div className="flex gap-3 text-gray-400">
               <input
                 type="file"
-                accept="image/*,video/*"
+                accept="image/*"
+                multiple
                 onChange={handleImageChange}
                 id="upload-image"
                 className="hidden"
-                disabled={isSubmitting}
+                disabled={isSubmitting || fileImages.length >= MAX_FILES}
               />
               <label
                 htmlFor="upload-image"
@@ -217,7 +288,9 @@ export default function NewPost({ onClose }) {
             <button
               className="bg-teal-700 hover:bg-teal-600 transition-colors rounded-md px-10 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handlePost}
-              disabled={isSubmitting || (!postContent.trim() && !fileImage)}
+              disabled={
+                isSubmitting || (!postContent.trim() && fileImages.length === 0)
+              }
             >
               {isSubmitting ? "Posting..." : "Post"}
             </button>

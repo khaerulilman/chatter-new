@@ -56,19 +56,25 @@ export default function Home() {
       <div className="py-3 justify-between flex px-10 text-gray-400 border-b border-gray-500">
         <button
           onClick={handleShowPost}
-          className="hover:text-white transition duration-300"
+          className={`hover:text-white transition duration-300 ${
+            showPost ? "text-teal-400 underline" : ""
+          }`}
         >
           Posts
         </button>
         <button
           onClick={handleShowPeople}
-          className="hover:text-white transition duration-300"
+          className={`hover:text-white transition duration-300 ${
+            showPeople ? "text-teal-400 underline" : ""
+          }`}
         >
           People
         </button>
         <button
           onClick={handleShowNews}
-          className="hover:text-white transition duration-300"
+          className={`hover:text-white transition duration-300 ${
+            showNews ? "text-teal-400 underline" : ""
+          }`}
         >
           News
         </button>
