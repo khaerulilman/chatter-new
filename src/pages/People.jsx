@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { followsAPI } from "../api/api";
 import CardPeople from "../components/CardPeople";
+import Loading from "../components/Loading";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -143,9 +144,7 @@ export default function People() {
 
       {/* List */}
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-6 h-6 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" />
-        </div>
+        <Loading text="Loading..." />
       ) : currentList.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-500">
           <i className="fa-solid fa-user-slash text-4xl" />

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { commentsAPI } from "../api/api";
 import { useNavigate } from "react-router-dom";
+import Loading from "./Loading";
 
 export default function CommentPost({ postId }) {
   const { user } = useAuth();
@@ -111,12 +112,7 @@ export default function CommentPost({ postId }) {
         </button>
       </div>
 
-      {/* Loading indicator */}
-      {loading && (
-        <div className="flex justify-center py-4">
-          <div className="animate-spin border-t-4 border-teal-700 border-solid w-8 h-8 rounded-full"></div>
-        </div>
-      )}
+      {loading && <Loading />}
 
       {/* Comment Display */}
       {comments.map((comment) => (

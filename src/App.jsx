@@ -19,6 +19,7 @@ import ForgotPasswordVerify from "./pages/ForgotPasswordVerify.jsx";
 import EditProfile from "./pages/EditProfile.jsx";
 import Chats from "./pages/Chats.jsx";
 import Notifications from "./pages/Notifications.jsx";
+import Saldo from "./pages/Saldo.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import PublicRoute from "./components/PublicRoute.jsx";
@@ -81,6 +82,7 @@ function App() {
                 <Route path="/chats" element={<Chats />} />
                 <Route path="/chats/:conversationId" element={<Chats />} />
                 <Route path="/notifications" element={<Notifications />} />
+                <Route path="/saldo" element={<Saldo />} />
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>

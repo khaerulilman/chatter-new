@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
-import Navbar from "../components/Navbar";
-import Search from "../components/Search";
-import NewPost from "../components/NewPost";
+import MainLayout from "../components/MainLayout";
 import { notificationsAPI } from "../api/api";
 import { useAuth } from "../context/AuthContext";
+import Loading from "../components/Loading";
 
 // ─── Helper: label + icon per notification type ─────────────────
 const TYPE_META = {
@@ -24,6 +22,10 @@ const TYPE_META = {
   message: {
     icon: "fa-solid fa-envelope text-yellow-400",
     description: "sent you a message",
+  },
+  tip: {
+    icon: "fa-solid fa-coins text-teal-400",
+    description: "sent you a tip on your post",
   },
 };
 
@@ -82,7 +84,9 @@ function NotificationItem({ notif, onDoubleClick }) {
 
         {/* Redirect hint */}
         <p className="text-xs text-gray-600 mt-0.5 italic">
-          {notif.type === "like" || notif.type === "comment"
+          {notif.type === "like" ||
+          notif.type === "comment" ||
+          notif.type === "tip"
             ? "Double-click → go to post"
             : "Double-click → go to profile"}
         </p>
@@ -103,8 +107,6 @@ export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const isMobile = window.innerWidth < 600;
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -139,7 +141,11 @@ export default function Notifications() {
     }
 
     // Navigate
-    if (notif.type === "like" || notif.type === "comment") {
+    if (
+      notif.type === "like" ||
+      notif.type === "comment" ||
+      notif.type === "tip"
+    ) {
       navigate(`/posts/${notif.entity_id}`);
     } else if (notif.type === "follow" || notif.type === "message") {
       navigate(`/profile/${notif.actor_username}`);
@@ -159,79 +165,59 @@ export default function Notifications() {
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   return (
-    <>
-      <section className="h-screen bg-gray-950 scrollbar-hide overflow-auto">
-        <Navbar />
-        <div className="h-screen flex gap-2 max-lg:gap-0 justify-center">
-          {/* Left panel */}
-          <div className="flex flex-col max-md:hidden w-1/5 max-md:w-full max-lg:w-6/12 xl:mt-3">
-            {!isMobile && <NewPost disabled={isMobile} />}
-          </div>
-
-          {/* Center panel */}
-          <div className="flex flex-col w-5/12 xl:border xl:border-gray-500 max-lg:border-x max-md:border-r max-md:border-l-0 max-lg:w-full max-lg:border-gray-500 xl:rounded-md xl:mt-3">
-            {/* Header */}
-            <div className="py-3 px-4 text-white flex items-center justify-between border-b border-gray-500">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => navigate("/")}
-                  className="hover:text-gray-400 transition duration-300"
-                >
-                  <i className="fa-solid fa-arrow-left text-lg"></i>
-                </button>
-                <span className="text-lg font-semibold flex items-center gap-2">
-                  <i className="fa-solid fa-bell"></i>
-                  Notifications
-                  {unreadCount > 0 && (
-                    <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                      {unreadCount}
-                    </span>
-                  )}
-                </span>
-              </div>
-              {unreadCount > 0 && (
-                <button
-                  onClick={handleMarkAllRead}
-                  className="text-xs text-blue-400 hover:text-blue-300 transition"
-                >
-                  Mark all as read
-                </button>
-              )}
-            </div>
-
-            {/* Body */}
-            <div className="flex-1 overflow-auto scrollbar-hide">
-              {loading ? (
-                <div className="flex justify-center items-center h-40">
-                  <i className="fa-solid fa-spinner fa-spin text-white text-3xl"></i>
-                </div>
-              ) : error ? (
-                <div className="text-center text-red-500 mt-10 px-4">
-                  {error}
-                </div>
-              ) : notifications.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-40 text-gray-500 gap-2">
-                  <i className="fa-solid fa-bell-slash text-3xl"></i>
-                  <p className="text-sm">No notifications yet</p>
-                </div>
-              ) : (
-                notifications.map((notif) => (
-                  <NotificationItem
-                    key={notif.id}
-                    notif={notif}
-                    onDoubleClick={handleDoubleClick}
-                  />
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="max-md:block max-md:h-full max-lg:w-16 w-1/6">
-            <Sidebar />
-          </div>
+    <MainLayout>
+      {/* Header */}
+      <div className="py-3 px-4 text-white flex items-center justify-between border-b border-gray-500">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate("/")}
+            className="hover:text-gray-400 transition duration-300"
+          >
+            <i className="fa-solid fa-arrow-left text-lg"></i>
+          </button>
+          <span className="text-lg font-semibold flex items-center gap-2">
+            <i className="fa-solid fa-bell"></i>
+            Notifications
+            {unreadCount > 0 && (
+              <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                {unreadCount}
+              </span>
+            )}
+          </span>
         </div>
-      </section>
-    </>
+        {unreadCount > 0 && (
+          <button
+            onClick={handleMarkAllRead}
+            className="text-xs text-blue-400 hover:text-blue-300 transition"
+          >
+            Mark all as read
+          </button>
+        )}
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 overflow-auto scrollbar-hide">
+        {loading ? (
+          <div className="flex justify-center items-center h-40">
+            <Loading />
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-500 mt-10 px-4">{error}</div>
+        ) : notifications.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-40 text-gray-500 gap-2">
+            <i className="fa-solid fa-bell-slash text-3xl"></i>
+            <p className="text-sm">No notifications yet</p>
+          </div>
+        ) : (
+          notifications.map((notif) => (
+            <NotificationItem
+              key={notif.id}
+              notif={notif}
+              onDoubleClick={handleDoubleClick}
+            />
+          ))
+        )}
+      </div>
+    </MainLayout>
   );
 }

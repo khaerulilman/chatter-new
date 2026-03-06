@@ -2,9 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import EmojiPicker from "emoji-picker-react";
 import { useAuth } from "../context/AuthContext";
 import { usePosts } from "../context/PostsContext";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import NewPostProfile from "./NewPostProfile";
+import { postsAPI } from "../api/api";
 
-export default function NewPost() {
+export default function NewPost({ onClose }) {
   const { user } = useAuth();
   const { addPost } = usePosts();
   const navigate = useNavigate();
@@ -26,7 +28,10 @@ export default function NewPost() {
   // Close emoji picker when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target)
+      ) {
         setShowEmojiPicker(false);
       }
     };
@@ -101,28 +106,13 @@ export default function NewPost() {
         formData.append("media", fileImage); // Menambahkan file media jika ada
       }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/posts`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Gagal membuat post");
-      }
+      const response = await postsAPI.createPost(formData);
 
       // Menambahkan post ke context
       addPost({
-        id: data.post.id,
-        content: data.post.content,
-        media_url: data.post.media_url,
+        id: response.data.post.id,
+        content: response.data.post.content,
+        media_url: response.data.post.media_url,
         user_name: currentUser.name,
         user_id: currentUser.id,
         profile_picture: currentUser.profile_picture,
@@ -132,11 +122,15 @@ export default function NewPost() {
 
       resetForm();
       alert("Post berhasil dibuat!");
-
+      onClose?.();
       navigate("/?tab=posts"); // Redirect ke tab posts
     } catch (error) {
       console.error("Error saat membuat post:", error);
-      alert(error.message || "Terjadi kesalahan saat membuat post");
+      alert(
+        error.response?.data?.message ||
+          error.message ||
+          "Terjadi kesalahan saat membuat post",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -148,117 +142,101 @@ export default function NewPost() {
   };
 
   return (
-    <div className="flex flex-col p-4 gap-8 h-screen">
-      {currentUser ? (
-        <Link
-          to={`/profile/${currentUser.username}`}
-          className="flex justify-between items-center border border-solid border-gray-700 rounded-lg p-2"
-        >
-          <div className="flex gap-2 items-center">
-            <div className="w-12 h-12 rounded-lg overflow-hidden">
-              <img
-                src={
-                  currentUser.profile_picture ||
-                  "https://ik.imagekit.io/fs0yie8l6/images%20(13).jpg?updatedAt=1736213176171"
-                }
-                alt={currentUser.name || "User"}
-                className="w-full h-full object-cover rounded-lg"
-              />
-            </div>
-            <div className="flex flex-col text-gray-400">
-              <p className="text-white">{currentUser.username}</p>
-            </div>
-          </div>
-        </Link>
-      ) : (
-        <div className="flex flex-col gap-3">
-          <p className="text-gray-400 text-sm">Login untuk membuat post</p>
-          <div className="flex gap-2">
-            <Link
-              to="/login"
-              className="flex-1 text-center bg-teal-700 hover:bg-teal-600 transition-colors text-white py-2 rounded-lg font-medium"
-            >
-              Login
-            </Link>
-            <Link
-              to="/register"
-              className="flex-1 text-center bg-gray-700 hover:bg-gray-600 transition-colors text-white py-2 rounded-lg font-medium"
-            >
-              Register
-            </Link>
-          </div>
-        </div>
-      )}
-
-      <div className="flex flex-col text-white bg-gray-900 rounded-lg">
-        <textarea
-          value={postContent}
-          onChange={(e) => setPostContent(e.target.value)}
-          className="w-full bg-transparent outline-none p-3 resize-none scrollbar-hide min-h-[100px]"
-          placeholder="What's on your mind?"
-          disabled={isSubmitting}
-        />
-
-        {previewImage && (
-          <div className="h-auto w-full p-3 mt-8 relative">
-            <img
-              src={previewImage}
-              alt="Upload preview"
-              className="rounded-md h-36 w-full object-cover"
-            />
-            <button
-              onClick={removeImage}
-              className="absolute top-5 right-5 bg-gray-800 rounded-full p-1"
-            >
-              <i className="fa-solid fa-times text-white"></i>
-            </button>
-          </div>
-        )}
-
-        <div className="flex px-4 py-2 justify-between items-center">
-          <div className="flex gap-3 text-gray-400">
-            <input
-              type="file"
-              accept="image/*,video/*"
-              onChange={handleImageChange}
-              id="upload-image"
-              className="hidden"
-              disabled={isSubmitting}
-            />
-            <label
-              htmlFor="upload-image"
-              className="cursor-pointer hover:text-white transition-colors"
-            >
-              <i className="fa-solid fa-image text-xl"></i>
-            </label>
-            <button
-              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="hover:text-white transition-colors"
-              disabled={isSubmitting}
-            >
-              <i className="fa-regular fa-face-smile text-xl"></i>
-            </button>
-          </div>
-
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose?.();
+      }}
+    >
+      <div className="flex flex-col w-full max-w-lg bg-gray-900 rounded-2xl shadow-2xl overflow-hidden">
+        {/* Modal header */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-700">
+          <h2 className="text-white font-semibold text-base">Create Post</h2>
           <button
-            className="bg-teal-700 hover:bg-teal-600 transition-colors rounded-md px-10 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={handlePost}
-            disabled={isSubmitting || (!postContent.trim() && !fileImage)}
+            onClick={() => onClose?.()}
+            className="text-gray-400 hover:text-white transition-colors"
           >
-            {isSubmitting ? "Posting..." : "Post"}
+            <i className="fa-solid fa-xmark text-lg"></i>
           </button>
         </div>
 
-        {showEmojiPicker && (
-          <div ref={emojiPickerRef} className="absolute z-10 mt-20">
-            <EmojiPicker
-              onEmojiClick={(emojiData) => {
-                setPostContent((prev) => prev + emojiData.emoji);
-                setShowEmojiPicker(false);
-              }}
-            />
+        {/* Author info */}
+        <NewPostProfile user={currentUser} onClose={onClose} />
+
+        <div className="flex flex-col text-white">
+          <textarea
+            value={postContent}
+            onChange={(e) => setPostContent(e.target.value)}
+            className="w-full bg-transparent outline-none px-5 pt-3 pb-1 resize-none scrollbar-hide min-h-[110px] text-white placeholder-gray-500"
+            placeholder="What's on your mind?"
+            disabled={isSubmitting}
+            autoFocus
+          />
+
+          {previewImage && (
+            <div className="h-auto w-full px-5 pb-3 relative">
+              <img
+                src={previewImage}
+                alt="Upload preview"
+                className="rounded-lg h-40 w-full object-cover"
+              />
+              <button
+                onClick={removeImage}
+                className="absolute top-2 right-7 bg-gray-800/80 hover:bg-gray-700 rounded-full w-7 h-7 flex items-center justify-center"
+              >
+                <i className="fa-solid fa-times text-white text-sm"></i>
+              </button>
+            </div>
+          )}
+
+          <div className="flex px-5 py-3 justify-between items-center border-t border-gray-700">
+            <div className="flex gap-3 text-gray-400">
+              <input
+                type="file"
+                accept="image/*,video/*"
+                onChange={handleImageChange}
+                id="upload-image"
+                className="hidden"
+                disabled={isSubmitting}
+              />
+              <label
+                htmlFor="upload-image"
+                className="cursor-pointer hover:text-white transition-colors"
+              >
+                <i className="fa-solid fa-image text-xl"></i>
+              </label>
+              <button
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="hover:text-white transition-colors"
+                disabled={isSubmitting}
+              >
+                <i className="fa-regular fa-face-smile text-xl"></i>
+              </button>
+            </div>
+
+            <button
+              className="bg-teal-700 hover:bg-teal-600 transition-colors rounded-md px-10 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handlePost}
+              disabled={isSubmitting || (!postContent.trim() && !fileImage)}
+            >
+              {isSubmitting ? "Posting..." : "Post"}
+            </button>
           </div>
-        )}
+
+          {showEmojiPicker && (
+            <div
+              ref={emojiPickerRef}
+              className="absolute z-20 bottom-14 left-4"
+            >
+              <EmojiPicker
+                onEmojiClick={(emojiData) => {
+                  setPostContent((prev) => prev + emojiData.emoji);
+                  setShowEmojiPicker(false);
+                }}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
