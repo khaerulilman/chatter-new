@@ -306,5 +306,48 @@ export const notificationsAPI = {
   },
 };
 
+// ==================== WALLET APIs ====================
+
+export const walletAPI = {
+  // Get wallet balance
+  getBalance: () => {
+    return api.get("/api/wallet/balance");
+  },
+
+  // Create top up transaction (returns Midtrans snap token)
+  createTopUp: (amount: number) => {
+    return api.post("/api/wallet/topup", { amount });
+  },
+
+  // Verify top up status directly with Midtrans
+  verifyTopUp: (orderId: string) => {
+    return api.post("/api/wallet/topup/verify", { order_id: orderId });
+  },
+
+  // Get transaction history
+  getTransactions: (page: number = 1, limit: number = 20) => {
+    return api.get("/api/wallet/transactions", { params: { page, limit } });
+  },
+
+  // Get Midtrans client key
+  getMidtransClientKey: () => {
+    return api.get("/api/wallet/midtrans-client-key");
+  },
+};
+
+// ==================== TIPS APIs ====================
+
+export const tipsAPI = {
+  // Send a tip to a post
+  sendTip: (postId: string, amount: number, message?: string) => {
+    return api.post("/api/tips", { post_id: postId, amount, message });
+  },
+
+  // Get tips activity (received + sent)
+  getActivity: (page: number = 1, limit: number = 20) => {
+    return api.get("/api/tips/activity", { params: { page, limit } });
+  },
+};
+
 // Export the axios instance for custom requests
 export default api;

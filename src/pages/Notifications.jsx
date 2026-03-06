@@ -23,6 +23,10 @@ const TYPE_META = {
     icon: "fa-solid fa-envelope text-yellow-400",
     description: "sent you a message",
   },
+  tip: {
+    icon: "fa-solid fa-coins text-teal-400",
+    description: "sent you a tip on your post",
+  },
 };
 
 // ─── Single notification row ─────────────────────────────────────
@@ -80,7 +84,9 @@ function NotificationItem({ notif, onDoubleClick }) {
 
         {/* Redirect hint */}
         <p className="text-xs text-gray-600 mt-0.5 italic">
-          {notif.type === "like" || notif.type === "comment"
+          {notif.type === "like" ||
+          notif.type === "comment" ||
+          notif.type === "tip"
             ? "Double-click → go to post"
             : "Double-click → go to profile"}
         </p>
@@ -135,7 +141,11 @@ export default function Notifications() {
     }
 
     // Navigate
-    if (notif.type === "like" || notif.type === "comment") {
+    if (
+      notif.type === "like" ||
+      notif.type === "comment" ||
+      notif.type === "tip"
+    ) {
       navigate(`/posts/${notif.entity_id}`);
     } else if (notif.type === "follow" || notif.type === "message") {
       navigate(`/profile/${notif.actor_username}`);
