@@ -208,10 +208,11 @@ export default function EditProfile() {
         />
       )}
 
-      <section className="min-h-screen bg-gray-950 flex items-center justify-center py-6">
-        <div className="flex w-4/5 gap-6">
+      <section className="min-h-screen bg-gray-950 flex flex-col overflow-x-hidden py-6">
+        {/* Main Container */}
+        <div className="flex flex-col md:flex-row gap-6 px-4 md:px-6 max-w-6xl mx-auto w-full">
           {/* Sidebar Left */}
-          <div className="w-1/4 flex flex-col gap-6 flex-shrink-0">
+          <div className="w-full md:w-1/4 flex flex-col gap-6">
             {/* Profile picture */}
             <div className="flex justify-center">
               <div
@@ -221,7 +222,7 @@ export default function EditProfile() {
                 <img
                   src={profilePreview || user?.profile_picture}
                   alt="Profile"
-                  className="w-28 h-28 rounded-full object-cover border-4 border-gray-700"
+                  className="w-24 h-24 md:w-28 md:h-28 rounded-full object-cover border-4 border-gray-700"
                 />
                 <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <i className="fa-solid fa-camera text-white text-xl"></i>
@@ -239,31 +240,34 @@ export default function EditProfile() {
                 <img
                   src={headerPreview || user?.header_picture}
                   alt="Header"
-                  className="w-full h-20 object-cover"
+                  className="w-full h-24 md:h-20 object-cover"
                 />
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <i className="fa-solid fa-camera text-white text-lg"></i>
                 </div>
               </div>
             </div>
-
-            <ul className="text-gray-300 flex flex-col gap-2">
-              <li className="hover:text-white">
-                <Link to="/">
-                  <i className="fa-solid fa-arrow-left mr-2"></i> Back to
-                  Chatter
-                </Link>
-              </li>
-              <li className="hover:text-white">
-                <button onClick={handleLogout} className="flex items-center">
-                  <i className="fa-solid fa-arrow-right-from-bracket mr-2"></i>{" "}
-                  Logout
-                </button>
-              </li>
-            </ul>
           </div>
           {/* Content Edit Profile */}
-          <div className="flex flex-col w-3/4 p-6">
+          <div className="flex flex-col w-full md:w-3/4 p-4 md:p-6">
+            {/* Back and Logout */}
+            <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-700">
+              <Link
+                to="/"
+                className="text-gray-300 hover:text-white flex items-center"
+              >
+                <i className="fa-solid fa-arrow-left mr-2"></i>
+                <span className="hidden sm:inline">Back to Chatter</span>
+                <span className="sm:hidden">Back</span>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="text-gray-300 hover:text-white flex items-center"
+              >
+                <i className="fa-solid fa-arrow-right-from-bracket mr-2"></i>
+                <span className="hidden sm:inline">Logout</span>
+              </button>
+            </div>
             <h2 className="text-white text-2xl mb-4">Edit Profile</h2>
             {error && <p className="text-red-500">{error}</p>}{" "}
             {/* Display error message */}

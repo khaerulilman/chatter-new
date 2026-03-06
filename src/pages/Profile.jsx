@@ -253,7 +253,7 @@ export default function Profile() {
                 )}
               </div>
 
-              <div className="h-auto rounded-lg mx-6 -mt-12 flex flex-col justify-between pb-4">
+              <div className="h-auto rounded-lg mx-4 md:mx-6 -mt-12 flex flex-col justify-between pb-4">
                 {/* Avatar + action buttons */}
                 <div className="flex justify-between items-end">
                   <img
@@ -333,7 +333,7 @@ export default function Profile() {
 
                 {/* Joined */}
                 <div className="flex border border-gray-700 h-16 mt-4 rounded-lg">
-                  <div className="flex flex-col justify-center ml-4 text-gray-500">
+                  <div className="flex flex-col justify-center ml-3 md:ml-4 text-gray-500">
                     <h3 className="text-sm">Joined</h3>
                     <p className="text-sm">
                       {formatProfileDate(profileUser?.created_at)}
@@ -344,10 +344,10 @@ export default function Profile() {
             </div>
 
             {/* Tab Navigation */}
-            <div className="flex border-b border-gray-700">
+            <div className="flex border-b border-gray-700 overflow-x-auto scrollbar-hide">
               <button
                 onClick={() => setSearchParams({ tab: "posts" })}
-                className={`px-6 py-3 text-sm font-medium relative ${
+                className={`px-4 md:px-6 py-3 text-sm font-medium relative whitespace-nowrap ${
                   activeTab === "posts"
                     ? "text-white"
                     : "text-gray-400 hover:text-white"
@@ -360,7 +360,7 @@ export default function Profile() {
               </button>
               <button
                 onClick={() => setSearchParams({ tab: "followers" })}
-                className={`px-6 py-3 text-sm font-medium relative ${
+                className={`px-4 md:px-6 py-3 text-sm font-medium relative whitespace-nowrap ${
                   activeTab === "followers"
                     ? "text-white"
                     : "text-gray-400 hover:text-white"
@@ -373,7 +373,7 @@ export default function Profile() {
               </button>
               <button
                 onClick={() => setSearchParams({ tab: "following" })}
-                className={`px-6 py-3 text-sm font-medium relative ${
+                className={`px-4 md:px-6 py-3 text-sm font-medium relative whitespace-nowrap ${
                   activeTab === "following"
                     ? "text-white"
                     : "text-gray-400 hover:text-white"
@@ -387,7 +387,7 @@ export default function Profile() {
               {isOwner && (
                 <button
                   onClick={() => setSearchParams({ tab: "saved" })}
-                  className={`px-6 py-3 text-sm font-medium relative ${
+                  className={`px-4 md:px-6 py-3 text-sm font-medium relative whitespace-nowrap ${
                     activeTab === "saved"
                       ? "text-white"
                       : "text-gray-400 hover:text-white"
@@ -402,7 +402,7 @@ export default function Profile() {
             </div>
 
             {/* Tab Content */}
-            <div className="overflow-auto scrollbar-hide">
+            <div className="overflow-auto scrollbar-hide overflow-x-hidden w-full">
               {/* Posts tab */}
               {activeTab === "posts" && (
                 <div>
