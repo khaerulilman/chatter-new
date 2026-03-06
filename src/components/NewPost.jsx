@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { usePosts } from "../context/PostsContext";
 import { useNavigate } from "react-router-dom";
 import NewPostProfile from "./NewPostProfile";
+import { postsAPI } from "../api/api";
 
 export default function NewPost({ onClose }) {
   const { user } = useAuth();
@@ -105,28 +106,13 @@ export default function NewPost({ onClose }) {
         formData.append("media", fileImage); // Menambahkan file media jika ada
       }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/posts`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Gagal membuat post");
-      }
+      const response = await postsAPI.createPost(formData);
 
       // Menambahkan post ke context
       addPost({
-        id: data.post.id,
-        content: data.post.content,
-        media_url: data.post.media_url,
+        id: response.data.post.id,
+        content: response.data.post.content,
+        media_url: response.data.post.media_url,
         user_name: currentUser.name,
         user_id: currentUser.id,
         profile_picture: currentUser.profile_picture,
@@ -140,7 +126,11 @@ export default function NewPost({ onClose }) {
       navigate("/?tab=posts"); // Redirect ke tab posts
     } catch (error) {
       console.error("Error saat membuat post:", error);
-      alert(error.message || "Terjadi kesalahan saat membuat post");
+      alert(
+        error.response?.data?.message ||
+          error.message ||
+          "Terjadi kesalahan saat membuat post",
+      );
     } finally {
       setIsSubmitting(false);
     }

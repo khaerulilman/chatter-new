@@ -87,6 +87,13 @@ export default function Sidebar() {
             <p className="max-lg:hidden">Profile</p>
           </button>
           <button
+            onClick={() => handleProtectedNav("/saldo")}
+            className="xl:flex xl:items-center xl:gap-2 text-white"
+          >
+            <i className="fa-solid fa-wallet"></i>
+            <p className="max-lg:hidden">Balance</p>
+          </button>
+          <button
             onClick={() => handleProtectedNav("/edit-profile")}
             className="xl:flex xl:items-center xl:gap-2 text-white"
           >
