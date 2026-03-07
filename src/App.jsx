@@ -77,12 +77,12 @@ function App() {
                     </PublicRoute>
                   }
                 />
+                <Route path="/posts/:postId" element={<PostDetail />} />
 
                 <Route element={<ProtectedRoute />}>
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/profile/:username" element={<Profile />} />
                   <Route path="/edit-profile" element={<EditProfile />} />
-                  <Route path="/posts/:postId" element={<PostDetail />} />
                   <Route path="/chats" element={<Chats />} />
                   <Route path="/chats/:conversationId" element={<Chats />} />
                   <Route path="/notifications" element={<Notifications />} />
