@@ -165,9 +165,14 @@ export const likesAPI = {
     return api.patch(`/api/posts/${postId}/likes`);
   },
 
-  // Get like status for a post
+  // Get like status for a post (requires auth)
   getLikeStatus: (postId: string) => {
     return api.get(`/api/posts/${postId}/likes`);
+  },
+
+  // Get like count for a post (public, no auth required)
+  getLikeCount: (postId: string) => {
+    return api.get(`/api/posts/${postId}/likes/count`);
   },
 };
 
