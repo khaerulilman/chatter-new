@@ -155,6 +155,18 @@ export const postsAPI = {
   getSavedPosts: (page: number = 1, limit: number = 20) => {
     return api.get("/api/posts/saved", { params: { page, limit } });
   },
+
+  // Purchase a paid post
+  purchasePost: (postId: string) => {
+    return api.post(`/api/posts/${postId}/purchase`);
+  },
+
+  // Get purchase activity (received + sent)
+  getPurchaseActivity: (page: number = 1, limit: number = 20) => {
+    return api.get("/api/posts/purchases/activity", {
+      params: { page, limit },
+    });
+  },
 };
 
 // ==================== LIKES APIs ====================

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "../components/MainLayout";
 import { useAuth } from "../context/AuthContext";
-import { walletAPI, tipsAPI } from "../api/api";
+import { walletAPI, tipsAPI, postsAPI } from "../api/api";
 import Loading from "../components/Loading";
 import { useToast } from "../components/Toast";
 
@@ -163,6 +163,65 @@ function TipItem({ tip, type }) {
         >
           {isReceived ? "+" : "-"}
           {formatRupiah(tip.amount)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Post Purchase Activity Item ────────────────────────────────
+function PurchaseItem({ purchase, type }) {
+  const isReceived = type === "received";
+  const personName = isReceived ? purchase.buyer_name : purchase.seller_name;
+  const personUsername = isReceived
+    ? purchase.buyer_username
+    : purchase.seller_username;
+  const personPicture = isReceived
+    ? purchase.buyer_profile_picture
+    : purchase.seller_profile_picture;
+  const postPreview = purchase.post_content
+    ? purchase.post_content.length > 40
+      ? purchase.post_content.slice(0, 40) + "..."
+      : purchase.post_content
+    : "Post";
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-700 hover:bg-gray-800/50 transition-colors">
+      <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden">
+        <img
+          src={
+            personPicture ||
+            "https://ik.imagekit.io/fs0yie8l6/images%20(13).jpg?updatedAt=1736213176171"
+          }
+          alt={personName}
+          className="w-full h-full object-cover"
+        />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-white font-medium">
+          {isReceived ? (
+            <>
+              <span className="text-emerald-400">@{personUsername}</span>{" "}
+              membeli post
+            </>
+          ) : (
+            <>
+              Beli post dari{" "}
+              <span className="text-emerald-400">@{personUsername}</span>
+            </>
+          )}
+        </p>
+        <p className="text-xs text-gray-500 mt-0.5 truncate">{postPreview}</p>
+        <p className="text-xs text-gray-600 mt-0.5">
+          {formatDate(purchase.created_at)}
+        </p>
+      </div>
+      <div className="text-right">
+        <span
+          className={`text-sm font-semibold ${isReceived ? "text-green-400" : "text-red-400"}`}
+        >
+          {isReceived ? "+" : "-"}
+          {formatRupiah(purchase.amount)}
         </span>
       </div>
     </div>
@@ -336,11 +395,14 @@ export default function Saldo() {
   const [transactions, setTransactions] = useState([]);
   const [tipsReceived, setTipsReceived] = useState([]);
   const [tipsSent, setTipsSent] = useState([]);
+  const [purchasesReceived, setPurchasesReceived] = useState([]);
+  const [purchasesSent, setPurchasesSent] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showTopUp, setShowTopUp] = useState(false);
   const [snapReady, setSnapReady] = useState(false);
   const [activeTab, setActiveTab] = useState("transactions");
   const [tipsSubTab, setTipsSubTab] = useState("received");
+  const [purchasesSubTab, setPurchasesSubTab] = useState("received");
 
   // Load Midtrans Snap.js script
   useEffect(() => {
@@ -371,15 +433,18 @@ export default function Saldo() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [balanceRes, txRes, tipsRes] = await Promise.all([
+      const [balanceRes, txRes, tipsRes, purchasesRes] = await Promise.all([
         walletAPI.getBalance(),
         walletAPI.getTransactions(),
         tipsAPI.getActivity(),
+        postsAPI.getPurchaseActivity(),
       ]);
       setBalance(balanceRes.data.data.balance);
       setTransactions(txRes.data.data || []);
       setTipsReceived(tipsRes.data.data.received || []);
       setTipsSent(tipsRes.data.data.sent || []);
+      setPurchasesReceived(purchasesRes.data.data.received || []);
+      setPurchasesSent(purchasesRes.data.data.sent || []);
     } catch (err) {
       console.error("Error fetching wallet data:", err);
     } finally {
@@ -501,7 +566,18 @@ export default function Saldo() {
               }`}
             >
               <i className="fa-solid fa-coins"></i>
-              Tips Activity
+              Tips
+            </button>
+            <button
+              onClick={() => setActiveTab("purchases")}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-colors ${
+                activeTab === "purchases"
+                  ? "text-teal-400 border-b-2 border-teal-400"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              <i className="fa-solid fa-bag-shopping"></i>
+              Posts
             </button>
           </div>
 
@@ -523,7 +599,7 @@ export default function Saldo() {
                   />
                 ))
               )
-            ) : (
+            ) : activeTab === "tips" ? (
               /* Tips Activity */
               <>
                 {/* Sub-tabs: Received / Sent */}
@@ -571,6 +647,57 @@ export default function Saldo() {
                 ) : (
                   tipsSent.map((tip) => (
                     <TipItem key={tip.id} tip={tip} type="sent" />
+                  ))
+                )}
+              </>
+            ) : (
+              /* Posts Purchase Activity */
+              <>
+                {/* Sub-tabs: Received / Sent */}
+                <div className="flex border-b border-gray-800">
+                  <button
+                    onClick={() => setPurchasesSubTab("received")}
+                    className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
+                      purchasesSubTab === "received"
+                        ? "text-green-400 border-b-2 border-green-400"
+                        : "text-gray-500 hover:text-gray-300"
+                    }`}
+                  >
+                    <i className="fa-solid fa-arrow-down mr-1"></i>
+                    Pendapatan ({purchasesReceived.length})
+                  </button>
+                  <button
+                    onClick={() => setPurchasesSubTab("sent")}
+                    className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
+                      purchasesSubTab === "sent"
+                        ? "text-red-400 border-b-2 border-red-400"
+                        : "text-gray-500 hover:text-gray-300"
+                    }`}
+                  >
+                    <i className="fa-solid fa-arrow-up mr-1"></i>
+                    Pembelian ({purchasesSent.length})
+                  </button>
+                </div>
+
+                {purchasesSubTab === "received" ? (
+                  purchasesReceived.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-40 text-gray-500 gap-2">
+                      <i className="fa-solid fa-bag-shopping text-3xl"></i>
+                      <p className="text-sm">Belum ada pendapatan dari post</p>
+                    </div>
+                  ) : (
+                    purchasesReceived.map((p) => (
+                      <PurchaseItem key={p.id} purchase={p} type="received" />
+                    ))
+                  )
+                ) : purchasesSent.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-40 text-gray-500 gap-2">
+                    <i className="fa-solid fa-bag-shopping text-3xl"></i>
+                    <p className="text-sm">Belum ada pembelian post</p>
+                  </div>
+                ) : (
+                  purchasesSent.map((p) => (
+                    <PurchaseItem key={p.id} purchase={p} type="sent" />
                   ))
                 )}
               </>
