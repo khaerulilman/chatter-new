@@ -6,6 +6,12 @@
   font-family: "Fredoka", sans-serif;
 }
 
+html,
+body {
+  background-color: #030712; /* gray-950 */
+  overflow-x: hidden;
+}
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Hides scrollbar on Chrome, Safari, Edge */
 }
