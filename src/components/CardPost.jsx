@@ -42,9 +42,21 @@ export default function CardPost({ post }) {
       }
     };
 
+    // Fetch like count (public endpoint, no auth required)
+    const fetchLikeCount = async () => {
+      try {
+        const response = await likesAPI.getLikeCount(post.id);
+        setLikeCount(response.data.likeCount);
+      } catch (error) {
+        console.error("Error fetching like count:", error);
+        setLikeCount(post.likes || 0);
+      }
+    };
+
     // Fetch comment count if post has an ID
     if (post?.id) {
       fetchCommentCount();
+      fetchLikeCount();
     }
 
     // Check if post is already liked by user
@@ -53,17 +65,14 @@ export default function CardPost({ post }) {
         try {
           const response = await likesAPI.getLikeStatus(post.id);
           setIsLiked(response.data.isLiked);
-          setLikeCount(response.data.likeCount);
         } catch (error) {
           console.error("Error checking like status:", error);
           // Fallback to post data
           setIsLiked(post.isLiked || false);
-          setLikeCount(post.likes || 0);
         }
       } else if (post?.id) {
         // If user not logged in, use post data
         setIsLiked(post.isLiked || false);
-        setLikeCount(post.likes || 0);
       }
     };
 
