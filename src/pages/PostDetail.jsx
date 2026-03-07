@@ -26,11 +26,20 @@ export default function PostDetail() {
           postData.id = postId;
         }
 
-        // Fetch like count
+        // Fetch likes:
+        // - logged in: include isLiked status
+        // - guest: only fetch public like count to avoid 401 redirect
         try {
-          const likesResponse = await likesAPI.getLikeStatus(postId);
-          postData.likes = likesResponse.data.likeCount;
-          postData.isLiked = likesResponse.data.isLiked;
+          const token = localStorage.getItem("token");
+          if (token) {
+            const likesResponse = await likesAPI.getLikeStatus(postId);
+            postData.likes = likesResponse.data.likeCount;
+            postData.isLiked = likesResponse.data.isLiked;
+          } else {
+            const likesCountResponse = await likesAPI.getLikeCount(postId);
+            postData.likes = likesCountResponse.data.likeCount || 0;
+            postData.isLiked = false;
+          }
         } catch (e) {
           console.error("Error fetching likes:", e);
         }

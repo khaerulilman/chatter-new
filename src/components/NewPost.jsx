@@ -30,6 +30,9 @@ export default function NewPost({ onClose }) {
   const [isPaid, setIsPaid] = useState(false);
   const [price, setPrice] = useState("");
 
+  // Comments disabled state
+  const [commentsDisabled, setCommentsDisabled] = useState(false);
+
   // Current visibility mode: "public" | "follower" | "paid"
   const visibilityMode = isPaid
     ? "paid"
@@ -168,6 +171,7 @@ export default function NewPost({ onClose }) {
     setHiddenPreviewImages([]);
     setIsPaid(false);
     setPrice("");
+    setCommentsDisabled(false);
   };
 
   const handlePost = async () => {
@@ -213,6 +217,10 @@ export default function NewPost({ onClose }) {
         });
       }
 
+      if (commentsDisabled) {
+        formData.append("comments_disabled", "true");
+      }
+
       const response = await postsAPI.createPost(formData);
 
       // Menambahkan post ke context
@@ -227,6 +235,7 @@ export default function NewPost({ onClose }) {
         hidden_content: response.data.post.hidden_content,
         hidden_media_urls: response.data.post.hidden_media_urls,
         is_hidden_unlocked: true, // Owner always sees hidden content
+        comments_disabled: response.data.post.comments_disabled,
         user_name: currentUser.name,
         user_id: currentUser.id,
         profile_picture: currentUser.profile_picture,
@@ -317,12 +326,7 @@ export default function NewPost({ onClose }) {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose?.();
-      }}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
       <div className="flex flex-col w-full max-w-lg bg-gray-900 rounded-2xl shadow-2xl overflow-hidden">
         {/* Modal header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-700">
@@ -334,9 +338,6 @@ export default function NewPost({ onClose }) {
             <i className="fa-solid fa-xmark text-lg"></i>
           </button>
         </div>
-
-        {/* Author info */}
-        <NewPostProfile user={currentUser} onClose={onClose} />
 
         {/* Visibility toggle */}
         <div className="flex items-center gap-4 px-5 py-2 border-b border-gray-700">
@@ -404,7 +405,7 @@ export default function NewPost({ onClose }) {
           <textarea
             value={postContent}
             onChange={(e) => setPostContent(e.target.value)}
-            className="w-full bg-transparent outline-none px-5 pt-3 pb-1 resize-none scrollbar-hide min-h-[110px] text-white placeholder-gray-500"
+            className="w-full bg-transparent outline-none px-5 pt-3 pb-1 resize-y scrollbar-hide min-h-[110px] text-white placeholder-gray-500"
             placeholder="What's on your mind?"
             disabled={isSubmitting}
             autoFocus
@@ -437,7 +438,7 @@ export default function NewPost({ onClose }) {
 
           {/* Hidden content section (follower-only or paid) */}
           {hasHiddenSection && (
-            <div className="border-t border-dashed border-gray-600 mx-5 mt-2 pt-3">
+            <div className="px-5 mt-2 pt-3 border-t border-gray-700">
               <span
                 className={`text-xs font-medium flex items-center gap-1 mb-2 ${isPaid ? "text-emerald-400" : "text-amber-400"}`}
               >
@@ -467,7 +468,7 @@ export default function NewPost({ onClose }) {
                     step="1000"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    className="w-full bg-gray-800/50 border border-gray-600 rounded-lg outline-none px-3 py-2 text-white text-sm placeholder-gray-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    className="w-full bg-transparent outline-none px-3 py-2 text-white text-sm placeholder-gray-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     placeholder="e.g. 10000"
                     disabled={isSubmitting}
                   />
@@ -477,7 +478,7 @@ export default function NewPost({ onClose }) {
               <textarea
                 value={hiddenContent}
                 onChange={(e) => setHiddenContent(e.target.value)}
-                className="w-full bg-gray-800/50 border border-gray-600 rounded-lg outline-none px-3 py-2 resize-none scrollbar-hide min-h-[80px] text-white placeholder-gray-500 text-sm"
+                className="w-full bg-transparent outline-none px-3 py-2 resize-y scrollbar-hide min-h-[80px] text-white placeholder-gray-500 text-sm"
                 placeholder={
                   isPaid
                     ? "Write hidden content for paid viewers..."
@@ -536,7 +537,21 @@ export default function NewPost({ onClose }) {
               </div>
             </div>
           )}
-
+          {/* Disable comments checkbox */}
+          <div className="flex items-center gap-2 px-5 py-2 border-b border-gray-700">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={commentsDisabled}
+                onChange={(e) => setCommentsDisabled(e.target.checked)}
+                className="accent-teal-500 w-4 h-4"
+                disabled={isSubmitting}
+              />
+              <span className="text-gray-300 text-sm">
+                Disable comments for this post
+              </span>
+            </label>
+          </div>
           <div className="flex px-5 py-3 justify-between items-center border-t border-gray-700 mt-2">
             <div className="flex gap-3 text-gray-400">
               <input

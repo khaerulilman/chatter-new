@@ -647,7 +647,13 @@ export default function CardPost({ post }) {
       </div>
 
       {/* Comments */}
-      {showComment && <CommentPost postId={post.id} />}
+      {showComment && (
+        <CommentPost
+          postId={post.id}
+          commentsDisabled={post.comments_disabled}
+          postOwnerId={post.user_id}
+        />
+      )}
 
       {/* Image Gallery Modal */}
       {showFullImage && galleryImages.length > 0 && (
