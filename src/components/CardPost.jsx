@@ -5,7 +5,14 @@ import ConfirmModal from "./ConfirmModal";
 import { useToast } from "./Toast";
 import { useAuth } from "../context/AuthContext";
 import { usePosts } from "../context/PostsContext";
-import { commentsAPI, likesAPI, postsAPI, tipsAPI } from "../api/api";
+import {
+  commentsAPI,
+  likesAPI,
+  postsAPI,
+  tipsAPI,
+  walletAPI,
+  followsAPI,
+} from "../api/api";
 import { useNavigate } from "react-router-dom";
 
 export default function CardPost({ post }) {
@@ -31,6 +38,10 @@ export default function CardPost({ post }) {
   const [tipError, setTipError] = useState(null);
   const [tipSuccess, setTipSuccess] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [purchaseLoading, setPurchaseLoading] = useState(false);
+  const [showPurchaseConfirm, setShowPurchaseConfirm] = useState(false);
+  const [showFollowConfirm, setShowFollowConfirm] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
   useEffect(() => {
     // Fetch comment count for the post
@@ -292,6 +303,20 @@ export default function CardPost({ post }) {
   const visibleImages = allImages.slice(0, MAX_VISIBLE);
   const remainingCount = allImages.length - MAX_VISIBLE;
 
+  // Hidden media images (for follower-only posts)
+  const hiddenImages =
+    post.hidden_media_urls && Array.isArray(post.hidden_media_urls)
+      ? post.hidden_media_urls
+      : [];
+  const hiddenVisibleImages = hiddenImages.slice(0, MAX_VISIBLE);
+  const hiddenRemainingCount = hiddenImages.length - MAX_VISIBLE;
+
+  // Combined images for gallery (public + hidden if unlocked)
+  const galleryImages =
+    (post.is_follower_only || post.is_paid) && post.is_hidden_unlocked
+      ? [...allImages, ...hiddenImages]
+      : allImages;
+
   const openGallery = (index) => {
     setGalleryIndex(index);
     setShowFullImage(true);
@@ -333,6 +358,22 @@ export default function CardPost({ post }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {post.is_paid && (
+              <span
+                className="text-emerald-400 text-xs flex items-center gap-1"
+                title={`Paid post — Rp ${Number(post.price).toLocaleString("id-ID")}`}
+              >
+                <i className="fa-solid fa-money-bill-wave text-[10px]"></i>
+              </span>
+            )}
+            {post.is_follower_only && (
+              <span
+                className="text-amber-400 text-xs flex items-center gap-1"
+                title="Follower-only post"
+              >
+                <i className="fa-solid fa-user-lock text-[10px]"></i>
+              </span>
+            )}
             <p className="text-gray-400">
               {formatPostTime(post.created_at) || "00:00"}
             </p>
@@ -359,6 +400,74 @@ export default function CardPost({ post }) {
         <p className="whitespace-pre-wrap break-words">
           {renderContent(post.content)}
         </p>
+
+        {/* Hidden content — inline, blurred for non-followers/non-purchasers */}
+        {(post.is_follower_only || post.is_paid) &&
+          (post.is_hidden_unlocked
+            ? post.hidden_content && (
+                <p className="whitespace-pre-wrap break-words mt-1 text-gray-200">
+                  {renderContent(post.hidden_content)}
+                </p>
+              )
+            : (post.hidden_word_count > 0 || post.hidden_image_count > 0) && (
+                <div className="relative mt-1">
+                  <p className="whitespace-pre-wrap break-words blur-sm select-none pointer-events-none text-gray-400 text-sm">
+                    {"Lorem ipsum dolor sit amet consectetur adipisicing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua ut enim ad minim veniam quis nostrud exercitation ullamco.".slice(
+                      0,
+                      Math.min((post.hidden_word_count || 10) * 6, 200),
+                    )}
+                  </p>
+                  <div className="absolute inset-0 flex items-center gap-2">
+                    <i
+                      className={`fa-solid ${post.is_paid ? "fa-money-bill-wave text-emerald-400" : "fa-eye-slash text-amber-400"} text-sm`}
+                    ></i>
+                    <span className="text-xs text-gray-400">
+                      {[
+                        post.hidden_word_count > 0 &&
+                          `${post.hidden_word_count} words`,
+                        post.hidden_image_count > 0 &&
+                          `${post.hidden_image_count} image${post.hidden_image_count > 1 ? "s" : ""}`,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                      {" · "}
+                      {post.is_paid ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!localStorage.getItem("token")) {
+                              navigate("/login");
+                              return;
+                            }
+                            setShowPurchaseConfirm(true);
+                          }}
+                          disabled={purchaseLoading}
+                          className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors disabled:opacity-50"
+                        >
+                          {purchaseLoading
+                            ? "Processing..."
+                            : `Pay Rp ${Number(post.price).toLocaleString("id-ID")} to unlock`}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!localStorage.getItem("token")) {
+                              navigate("/login");
+                              return;
+                            }
+                            setShowFollowConfirm(true);
+                          }}
+                          disabled={followLoading}
+                          className="text-teal-400 hover:text-teal-300 font-medium transition-colors disabled:opacity-50 cursor-pointer"
+                        >
+                          Follow to unlock
+                        </button>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              ))}
       </div>
 
       {/* Media Grid */}
@@ -407,6 +516,58 @@ export default function CardPost({ post }) {
           </div>
         </div>
       )}
+
+      {/* Hidden media — shown after public media when unlocked */}
+      {(post.is_follower_only || post.is_paid) &&
+        post.is_hidden_unlocked &&
+        hiddenImages.length > 0 && (
+          <div className="w-full px-4 py-2">
+            <div
+              className={`grid gap-0.5 rounded-xl overflow-hidden ${
+                hiddenImages.length === 1
+                  ? "grid-cols-1"
+                  : hiddenImages.length === 2
+                    ? "grid-cols-2"
+                    : "grid-cols-3"
+              }`}
+            >
+              {hiddenVisibleImages.map((url, i) => {
+                const isLast =
+                  i === MAX_VISIBLE - 1 && hiddenRemainingCount > 0;
+                return (
+                  <div
+                    key={i}
+                    className="relative cursor-pointer overflow-hidden"
+                    onClick={() =>
+                      openGallery(
+                        allImages.length + (isLast ? MAX_VISIBLE - 1 : i),
+                      )
+                    }
+                  >
+                    <img
+                      src={url}
+                      alt={`Hidden Media ${i + 1}`}
+                      className={`w-full object-cover hover:opacity-90 transition-opacity ${
+                        hiddenImages.length === 1
+                          ? "max-h-80"
+                          : hiddenImages.length === 2
+                            ? "h-[200px]"
+                            : "h-[110px]"
+                      }`}
+                    />
+                    {isLast && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <span className="text-white text-2xl font-bold">
+                          +{hiddenRemainingCount}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
       {/* Actions */}
       <div className="flex mt-2 gap-3 px-4 py-2">
@@ -489,7 +650,7 @@ export default function CardPost({ post }) {
       {showComment && <CommentPost postId={post.id} />}
 
       {/* Image Gallery Modal */}
-      {showFullImage && allImages.length > 0 && (
+      {showFullImage && galleryImages.length > 0 && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
           onClick={() => setShowFullImage(false)}
@@ -507,14 +668,14 @@ export default function CardPost({ post }) {
             </button>
 
             {/* Counter */}
-            {allImages.length > 1 && (
+            {galleryImages.length > 1 && (
               <div className="absolute top-4 left-4 z-10 bg-gray-800/80 rounded-full px-3 py-1 text-white text-sm">
-                {galleryIndex + 1} / {allImages.length}
+                {galleryIndex + 1} / {galleryImages.length}
               </div>
             )}
 
             {/* Prev */}
-            {allImages.length > 1 && galleryIndex > 0 && (
+            {galleryImages.length > 1 && galleryIndex > 0 && (
               <button
                 onClick={() => setGalleryIndex((prev) => prev - 1)}
                 className="absolute left-6 z-10 bg-gray-800/80 hover:bg-gray-700 rounded-full w-10 h-10 flex items-center justify-center text-white"
@@ -525,20 +686,21 @@ export default function CardPost({ post }) {
 
             {/* Image */}
             <img
-              src={allImages[galleryIndex]}
+              src={galleryImages[galleryIndex]}
               alt={`Post Media ${galleryIndex + 1}`}
               className="max-w-full max-h-[85vh] object-contain rounded-lg"
             />
 
             {/* Next */}
-            {allImages.length > 1 && galleryIndex < allImages.length - 1 && (
-              <button
-                onClick={() => setGalleryIndex((prev) => prev + 1)}
-                className="absolute right-6 z-10 bg-gray-800/80 hover:bg-gray-700 rounded-full w-10 h-10 flex items-center justify-center text-white"
-              >
-                <i className="fa-solid fa-chevron-right"></i>
-              </button>
-            )}
+            {galleryImages.length > 1 &&
+              galleryIndex < galleryImages.length - 1 && (
+                <button
+                  onClick={() => setGalleryIndex((prev) => prev + 1)}
+                  className="absolute right-6 z-10 bg-gray-800/80 hover:bg-gray-700 rounded-full w-10 h-10 flex items-center justify-center text-white"
+                >
+                  <i className="fa-solid fa-chevron-right"></i>
+                </button>
+              )}
           </div>
         </div>
       )}
@@ -571,6 +733,65 @@ export default function CardPost({ post }) {
         confirmColor="bg-red-600 hover:bg-red-500"
         onConfirm={confirmDeletePost}
         onCancel={() => setShowDeleteConfirm(false)}
+      />
+
+      <ConfirmModal
+        show={showPurchaseConfirm}
+        title="Confirm Purchase"
+        message={`You are about to purchase this post for Rp ${Number(post.price).toLocaleString("id-ID")}. This amount will be deducted from your wallet.`}
+        icon="fa-money-bill-wave"
+        iconColor="text-emerald-400"
+        confirmText="Yes, Buy"
+        cancelText="Cancel"
+        confirmColor="bg-emerald-600 hover:bg-emerald-500"
+        onConfirm={async () => {
+          setShowPurchaseConfirm(false);
+          setPurchaseLoading(true);
+          try {
+            await postsAPI.purchasePost(post.id);
+            showToast(
+              `Post purchased for Rp ${Number(post.price).toLocaleString("id-ID")}!`,
+              "tip",
+            );
+            fetchPosts();
+          } catch (err) {
+            showToast(
+              err.response?.data?.message || "Failed to purchase post",
+              "error",
+            );
+          } finally {
+            setPurchaseLoading(false);
+          }
+        }}
+        onCancel={() => setShowPurchaseConfirm(false)}
+      />
+
+      <ConfirmModal
+        show={showFollowConfirm}
+        title="Follow User"
+        message={`Follow @${post.username} to unlock this post and see exclusive content from this user.`}
+        icon="fa-user-plus"
+        iconColor="text-teal-400"
+        confirmText="Yes, Follow"
+        cancelText="Cancel"
+        confirmColor="bg-teal-600 hover:bg-teal-500"
+        onConfirm={async () => {
+          setShowFollowConfirm(false);
+          setFollowLoading(true);
+          try {
+            await followsAPI.toggleFollow(post.user_id);
+            showToast(`You are now following @${post.username}!`, "success");
+            fetchPosts();
+          } catch (err) {
+            showToast(
+              err.response?.data?.message || "Failed to follow user",
+              "error",
+            );
+          } finally {
+            setFollowLoading(false);
+          }
+        }}
+        onCancel={() => setShowFollowConfirm(false)}
       />
     </div>
   );
