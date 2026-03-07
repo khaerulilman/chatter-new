@@ -1,17 +1,26 @@
 import axios from "axios";
 
+// ─── In-memory Access Token Store ─────────────────────────────────
+let accessToken: string | null = null;
+
+export const getAccessToken = () => accessToken;
+export const setAccessToken = (token: string | null) => {
+  accessToken = token;
+};
+
 // Create axios instance with base URL from environment variable
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true, // Send HttpOnly cookies cross-origin
 });
 
-// Request interceptor to add token to requests
+// Request interceptor to add access token to requests
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -22,20 +31,71 @@ api.interceptors.request.use(
   },
 );
 
-// Response interceptor for error handling
+// ─── Response interceptor with automatic token refresh ────────────
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (token: string | null) => void;
+  reject: (error: unknown) => void;
+}> = [];
+
+const processQueue = (error: unknown, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Auto-redirect only when the user actually had a token.
-      // For guest/public requests, let each page handle 401 locally.
-      const token = localStorage.getItem("token");
-      if (token) {
-        localStorage.removeItem("token");
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Only attempt refresh on 401 errors that haven't been retried
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      originalRequest.url !== "/api/auth/refresh" &&
+      originalRequest.url !== "/api/auth/login"
+    ) {
+      // If already refreshing, queue this request
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const response = await api.post("/api/auth/refresh");
+        const newAccessToken = response.data.accessToken;
+
+        setAccessToken(newAccessToken);
+        processQueue(null, newAccessToken);
+
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        setAccessToken(null);
         localStorage.removeItem("user");
         window.location.href = "/login";
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
+
     return Promise.reject(error);
   },
 );
@@ -85,6 +145,16 @@ export const authAPI = {
     newPassword: string;
   }) => {
     return api.post("/api/auth/reset-password", data);
+  },
+
+  // Refresh access token (refresh token sent via HttpOnly cookie)
+  refresh: () => {
+    return api.post("/api/auth/refresh");
+  },
+
+  // Logout (clears refresh token cookie)
+  logout: () => {
+    return api.post("/api/auth/logout");
   },
 };
 

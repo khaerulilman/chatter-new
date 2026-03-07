@@ -108,8 +108,8 @@ export default function CardPost({ post }) {
   }, [post?.id, user?.id]); // Only depend on post.id and user.id
 
   const handleLike = async () => {
-    // Check if user is logged in by checking token in localStorage
-    if (!localStorage.getItem("token")) {
+    // Check if user is logged in
+    if (!user) {
       navigate("/login");
       return;
     }
@@ -141,7 +141,7 @@ export default function CardPost({ post }) {
   };
 
   const handleSave = async () => {
-    if (!localStorage.getItem("token")) {
+    if (!user) {
       navigate("/login");
       return;
     }
@@ -435,7 +435,7 @@ export default function CardPost({ post }) {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (!localStorage.getItem("token")) {
+                            if (!user) {
                               navigate("/login");
                               return;
                             }
@@ -452,7 +452,7 @@ export default function CardPost({ post }) {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (!localStorage.getItem("token")) {
+                            if (!user) {
                               navigate("/login");
                               return;
                             }
@@ -606,7 +606,7 @@ export default function CardPost({ post }) {
         {user?.id && user.id !== post.user_id && (
           <button
             onClick={() => {
-              if (!localStorage.getItem("token")) {
+              if (!user) {
                 navigate("/login");
                 return;
               }

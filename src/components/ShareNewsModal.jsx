@@ -33,8 +33,7 @@ export default function ShareNewsModal({ article, onClose }) {
   }, [showEmojiPicker]);
 
   const handlePost = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    if (!user) {
       navigate("/login");
       return;
     }

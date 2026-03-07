@@ -1,35 +1,65 @@
 import { createContext, useState, useContext, useEffect } from "react";
+import { authAPI, setAccessToken } from "../api/api";
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
-      const token = localStorage.getItem("token");
       const storedUser = localStorage.getItem("user");
-      // If no token exists, clear stale user data
-      if (!token) {
-        localStorage.removeItem("user");
-        return null;
-      }
       return storedUser ? JSON.parse(storedUser) : null;
     } catch (error) {
       console.error("Failed to parse user from localStorage:", error);
       return null;
     }
   });
+  const [authLoading, setAuthLoading] = useState(true);
 
-  const isAuthenticated = !!user && !!localStorage.getItem("token");
+  const isAuthenticated = !!user;
 
-  const login = (userData) => {
+  const login = (userData, accessToken) => {
+    setAccessToken(accessToken);
     setUser(userData);
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
+  const logout = async () => {
+    try {
+      await authAPI.logout();
+    } catch {
+      // Ignore errors — always clear local state
+    }
+    setAccessToken(null);
     localStorage.removeItem("user");
     setUser(null);
   };
+
+  // Silent refresh on app load — restore session from HttpOnly cookie
+  useEffect(() => {
+    const silentRefresh = async () => {
+      const storedUser = localStorage.getItem("user");
+      if (!storedUser) {
+        // No previous session — skip refresh
+        setAuthLoading(false);
+        return;
+      }
+
+      try {
+        const response = await authAPI.refresh();
+        setAccessToken(response.data.accessToken);
+        // Update user data from server (in case profile changed)
+        setUser(response.data.data);
+      } catch {
+        // Refresh failed — session expired, clear local state
+        setAccessToken(null);
+        localStorage.removeItem("user");
+        setUser(null);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    silentRefresh();
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -41,7 +71,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, setUser, isAuthenticated, login, logout }}
+      value={{ user, setUser, isAuthenticated, login, logout, authLoading }}
     >
       {children}
     </AuthContext.Provider>

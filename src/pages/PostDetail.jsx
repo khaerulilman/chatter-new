@@ -4,10 +4,12 @@ import MainLayout from "../components/MainLayout";
 import CardPost from "../components/CardPost";
 import { postsAPI, commentsAPI, likesAPI } from "../api/api";
 import Loading from "../components/Loading";
+import { useAuth } from "../context/AuthContext";
 
 export default function PostDetail() {
   const { postId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,8 +32,7 @@ export default function PostDetail() {
         // - logged in: include isLiked status
         // - guest: only fetch public like count to avoid 401 redirect
         try {
-          const token = localStorage.getItem("token");
-          if (token) {
+          if (user) {
             const likesResponse = await likesAPI.getLikeStatus(postId);
             postData.likes = likesResponse.data.likeCount;
             postData.isLiked = likesResponse.data.isLiked;

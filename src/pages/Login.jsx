@@ -23,19 +23,19 @@ export default function Login() {
 
       const result = response.data;
 
-      // Simpan token ke localStorage untuk digunakan oleh interceptor
-      localStorage.setItem("token", result.token);
-
-      // Simpan user data ke context
-      login({
-        id: result.data.id,
-        name: result.data.name,
-        email: result.data.email,
-        username: result.data.username,
-        profile_picture: result.data.profile_picture,
-        header_picture: result.data.header_picture,
-        created_at: result.data.created_at,
-      });
+      // Store access token in memory + user data in context
+      login(
+        {
+          id: result.data.id,
+          name: result.data.name,
+          email: result.data.email,
+          username: result.data.username,
+          profile_picture: result.data.profile_picture,
+          header_picture: result.data.header_picture,
+          created_at: result.data.created_at,
+        },
+        result.accessToken,
+      );
 
       // Redirect ke halaman utama
       navigate("/");

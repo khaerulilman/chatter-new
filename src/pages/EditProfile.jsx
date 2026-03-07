@@ -115,8 +115,8 @@ export default function EditProfile() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Pastikan user dan token tersedia
-    if (!user || !localStorage.getItem("token")) {
+    // Pastikan user tersedia
+    if (!user) {
       setError("User not authenticated. Please login again.");
       navigate("/login");
       return;

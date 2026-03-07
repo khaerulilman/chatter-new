@@ -1,9 +1,11 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { postsAPI } from "../api/api";
+import { useAuth } from "./AuthContext";
 
 const PostsContext = createContext(undefined);
 
 export const PostsProvider = ({ children }) => {
+  const { authLoading } = useAuth();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -55,9 +57,13 @@ export const PostsProvider = ({ children }) => {
     );
   };
 
+  // Wait for auth to be ready (silent refresh) before fetching posts
+  // so the access token is available and requesterId is sent
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    if (!authLoading) {
+      fetchPosts();
+    }
+  }, [authLoading]);
 
   return (
     <PostsContext.Provider
