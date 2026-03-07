@@ -10,7 +10,7 @@ export default function MainLayout({ children, leftSlot }) {
   const { user } = useAuth();
 
   return (
-    <section className="h-screen bg-gray-950 scrollbar-hide overflow-auto overflow-x-hidden">
+    <section className="h-screen bg-gray-950 overflow-hidden">
       <div className="h-screen flex gap-2 max-lg:gap-0 justify-center">
         {/* Left panel */}
         <LeftPanel
@@ -20,12 +20,12 @@ export default function MainLayout({ children, leftSlot }) {
         />
 
         {/* Centre panel – page-specific content goes here */}
-        <div className="flex flex-col w-5/12 xl:border xl:border-gray-500 max-lg:border-x max-md:border-r max-md:border-l-0 max-lg:w-full max-lg:border-gray-500 xl:rounded-md xl:mt-3 max-md:pt-14">
+        <div className="flex flex-col w-5/12 xl:border xl:border-gray-500 max-lg:border-x max-md:border-r max-md:border-l-0 max-lg:w-full max-lg:border-gray-500 xl:rounded-md xl:mt-3 max-md:pt-14 overflow-auto scrollbar-hide">
           {children}
         </div>
 
-        {/* Right sidebar */}
-        <div className="max-md:block max-lg:w-16 w-1/6 sticky top-0 h-screen">
+        {/* Right sidebar – fixed, no scroll */}
+        <div className="max-md:block max-lg:w-16 w-1/6 h-screen overflow-hidden shrink-0">
           <Sidebar />
         </div>
       </div>
