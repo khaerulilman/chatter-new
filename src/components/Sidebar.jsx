@@ -11,6 +11,11 @@ export default function Sidebar() {
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const navButtonClass = (isActive) =>
+    `xl:flex xl:items-center xl:gap-2 transition-colors ${
+      isActive ? "text-teal-400" : "text-white hover:text-teal-300"
+    }`;
+
   // Poll unread count every 30s when logged in
   useEffect(() => {
     if (!user?.id) return;
@@ -52,10 +57,10 @@ export default function Sidebar() {
             <img src={imgLogo} alt="Logo Chatter" className="w-10" />
             <p className="text-lg">Chatter</p>
           </div>
-          <ButtonSidebar icon="fa-solid fa-house" name="Home" path={"/"} />
+          <ButtonSidebar icon="fa-house" name="Home" path={"/"} />
           <button
             onClick={() => handleProtectedNav("/chats")}
-            className="xl:flex xl:items-center xl:gap-2 text-white"
+            className={navButtonClass(location.pathname.startsWith("/chats"))}
           >
             <i className="fa-solid fa-message"></i>
             <p className="max-lg:hidden">Messages</p>
@@ -63,7 +68,9 @@ export default function Sidebar() {
           {/* Notifications */}
           <button
             onClick={() => handleProtectedNav("/notifications")}
-            className="xl:flex xl:items-center xl:gap-2 text-white relative"
+            className={`${navButtonClass(
+              location.pathname.startsWith("/notifications"),
+            )} relative`}
           >
             <span className="relative">
               <i className="fa-solid fa-bell"></i>
@@ -81,21 +88,21 @@ export default function Sidebar() {
                 user?.username ? `/profile/${user.username}` : "/profile",
               )
             }
-            className="xl:flex xl:items-center xl:gap-2 text-white"
+            className={navButtonClass(location.pathname.startsWith("/profile"))}
           >
             <i className="fa-solid fa-user"></i>
             <p className="max-lg:hidden">Profile</p>
           </button>
           <button
             onClick={() => handleProtectedNav("/saldo")}
-            className="xl:flex xl:items-center xl:gap-2 text-white"
+            className={navButtonClass(location.pathname.startsWith("/saldo"))}
           >
             <i className="fa-solid fa-wallet"></i>
             <p className="max-lg:hidden">Balance</p>
           </button>
           <button
             onClick={() => handleProtectedNav("/edit-profile")}
-            className="xl:flex xl:items-center xl:gap-2 text-white"
+            className={navButtonClass(location.pathname.startsWith("/edit-profile"))}
           >
             <i className="fa-solid fa-gear"></i>
             <p className="max-lg:hidden">Settings</p>
