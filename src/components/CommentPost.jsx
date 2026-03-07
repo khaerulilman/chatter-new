@@ -6,7 +6,11 @@ import Loading from "./Loading";
 import ConfirmModal from "./ConfirmModal";
 import { useToast } from "./Toast";
 
-export default function CommentPost({ postId }) {
+export default function CommentPost({
+  postId,
+  commentsDisabled = false,
+  postOwnerId,
+}) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const showToast = useToast();
@@ -99,30 +103,28 @@ export default function CommentPost({ postId }) {
     <div className="h-auto border-t mt-2 border-gray-600 flex flex-col w-full overflow-hidden">
       {/* Comment Input */}
       <div className="flex items-center mb-2 pt-4 pb-3 px-4 gap-3">
-        {/* <div className="w-10 h-10 rounded-lg overflow-hidden">
-          <img
-            src={
-              user?.profile_picture ||
-              "https://ik.imagekit.io/fs0yie8l6/images%20(13).jpg?updatedAt=1736213176171"
-            }
-            alt={user?.name || "User"}
-            className="w-full h-full object-cover"
-          />
-        </div> */}
-
-        <input
-          type="text"
-          placeholder="Add a comment..."
-          className="flex-1 py-2 px-3 bg-gray-800 text-white rounded-lg outline-none"
-          onChange={(e) => setCommentContent(e.target.value)}
-          value={commentContent}
-        />
-        <button
-          className="ml-2 bg-teal-700 text-white p-2 px-4 rounded-lg hover:bg-teal-800"
-          onClick={handleCommentSubmit}
-        >
-          Post
-        </button>
+        {commentsDisabled && user?.id !== postOwnerId ? (
+          <div className="flex-1 flex items-center gap-2 py-2 px-3 bg-gray-800/50 text-gray-500 rounded-lg text-sm">
+            <i className="fa-solid fa-comment-slash"></i>
+            <span>Comments are disabled for this post</span>
+          </div>
+        ) : (
+          <>
+            <input
+              type="text"
+              placeholder="Add a comment..."
+              className="flex-1 py-2 px-3 bg-gray-800 text-white rounded-lg outline-none"
+              onChange={(e) => setCommentContent(e.target.value)}
+              value={commentContent}
+            />
+            <button
+              className="ml-2 bg-teal-700 text-white p-2 px-4 rounded-lg hover:bg-teal-800"
+              onClick={handleCommentSubmit}
+            >
+              Post
+            </button>
+          </>
+        )}
       </div>
 
       {loading && <Loading />}
