@@ -24,8 +24,8 @@ export default function MainLayout({ children, leftSlot }) {
           {children}
         </div>
 
-        {/* Right sidebar – fixed, no scroll */}
-        <div className="max-md:block max-lg:w-16 w-1/6 h-screen overflow-hidden shrink-0">
+        {/* Right sidebar – hidden on mobile, visible on md+ */}
+        <div className="max-md:hidden max-lg:w-16 w-1/6 h-screen overflow-hidden shrink-0">
           <Sidebar />
         </div>
       </div>
