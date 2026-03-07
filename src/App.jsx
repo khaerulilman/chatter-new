@@ -23,12 +23,14 @@ import Saldo from "./pages/Saldo.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import PublicRoute from "./components/PublicRoute.jsx";
+import UpdateNotification from "./components/UpdateNotification.jsx";
 
 function App() {
   return (
     <AuthProvider>
       <PostsProvider>
         <ChatsProvider>
+          <UpdateNotification />
           <Router>
             <Routes>
               <Route path="/" element={<Home />} />

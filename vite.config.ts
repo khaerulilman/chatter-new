@@ -1,6 +1,26 @@
-import { defineConfig } from "vite";
+import { defineConfig, Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA, VitePWAOptions } from "vite-plugin-pwa";
+import fs from "fs";
+import path from "path";
+
+/**
+ * Vite plugin: writes dist/version.json with a unique buildId on every production build.
+ * The frontend polls this file to detect new deployments.
+ */
+function versionPlugin(): Plugin {
+  return {
+    name: "version-json",
+    writeBundle() {
+      const buildId =
+        Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      fs.writeFileSync(
+        path.resolve("dist", "version.json"),
+        JSON.stringify({ buildId }),
+      );
+    },
+  };
+}
 
 const manifestForPlugIn: Partial<VitePWAOptions> = {
   registerType: "prompt",
@@ -46,7 +66,7 @@ const manifestForPlugIn: Partial<VitePWAOptions> = {
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), VitePWA(manifestForPlugIn)],
+  plugins: [react(), VitePWA(manifestForPlugIn), versionPlugin()],
   build: {
     rollupOptions: {
       output: {
