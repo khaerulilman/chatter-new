@@ -24,71 +24,74 @@ import NotFound from "./pages/NotFound.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import PublicRoute from "./components/PublicRoute.jsx";
 import UpdateNotification from "./components/UpdateNotification.jsx";
+import { ToastProvider } from "./components/Toast.jsx";
 
 function App() {
   return (
     <AuthProvider>
       <PostsProvider>
         <ChatsProvider>
-          <UpdateNotification />
-          <Router>
-            <Routes>
-              <Route path="/" element={<Home />} />
+          <ToastProvider>
+            <UpdateNotification />
+            <Router>
+              <Routes>
+                <Route path="/" element={<Home />} />
 
-              <Route
-                path="/login"
-                element={
-                  <PublicRoute>
-                    <Login />
-                  </PublicRoute>
-                }
-              />
-              <Route
-                path="/register"
-                element={
-                  <PublicRoute>
-                    <Register />
-                  </PublicRoute>
-                }
-              />
-              <Route
-                path="/otp"
-                element={
-                  <PublicRoute>
-                    <Otp />
-                  </PublicRoute>
-                }
-              />
-              <Route
-                path="/forgot-password"
-                element={
-                  <PublicRoute>
-                    <ForgotPassword />
-                  </PublicRoute>
-                }
-              />
-              <Route
-                path="/forgot-password/verify"
-                element={
-                  <PublicRoute>
-                    <ForgotPasswordVerify />
-                  </PublicRoute>
-                }
-              />
+                <Route
+                  path="/login"
+                  element={
+                    <PublicRoute>
+                      <Login />
+                    </PublicRoute>
+                  }
+                />
+                <Route
+                  path="/register"
+                  element={
+                    <PublicRoute>
+                      <Register />
+                    </PublicRoute>
+                  }
+                />
+                <Route
+                  path="/otp"
+                  element={
+                    <PublicRoute>
+                      <Otp />
+                    </PublicRoute>
+                  }
+                />
+                <Route
+                  path="/forgot-password"
+                  element={
+                    <PublicRoute>
+                      <ForgotPassword />
+                    </PublicRoute>
+                  }
+                />
+                <Route
+                  path="/forgot-password/verify"
+                  element={
+                    <PublicRoute>
+                      <ForgotPasswordVerify />
+                    </PublicRoute>
+                  }
+                />
 
-              <Route element={<ProtectedRoute />}>
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/profile/:username" element={<Profile />} />
-                <Route path="/edit-profile" element={<EditProfile />} />
-                <Route path="/posts/:postId" element={<PostDetail />} />
-                <Route path="/chats" element={<Chats />} />
-                <Route path="/chats/:conversationId" element={<Chats />} />
-                <Route path="/notifications" element={<Notifications />} />
-                <Route path="/saldo" element={<Saldo />} />
-                <Route path="*" element={<NotFound />} />
-              </Route>
-            </Routes>
-          </Router>{" "}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/profile/:username" element={<Profile />} />
+                  <Route path="/edit-profile" element={<EditProfile />} />
+                  <Route path="/posts/:postId" element={<PostDetail />} />
+                  <Route path="/chats" element={<Chats />} />
+                  <Route path="/chats/:conversationId" element={<Chats />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                  <Route path="/saldo" element={<Saldo />} />
+                  <Route path="*" element={<NotFound />} />
+                </Route>
+              </Routes>
+            </Router>{" "}
+          </ToastProvider>
         </ChatsProvider>
       </PostsProvider>{" "}
     </AuthProvider>

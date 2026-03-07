@@ -3,13 +3,17 @@ import { useAuth } from "../context/AuthContext";
 import { commentsAPI } from "../api/api";
 import { useNavigate } from "react-router-dom";
 import Loading from "./Loading";
+import ConfirmModal from "./ConfirmModal";
+import { useToast } from "./Toast";
 
 export default function CommentPost({ postId }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const showToast = useToast();
   const [commentContent, setCommentContent] = useState("");
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   // Fetch comments when component mounts or postId changes
   useEffect(() => {
@@ -20,7 +24,10 @@ export default function CommentPost({ postId }) {
         setComments(response.data.data); // Ambil data dari response
       } catch (error) {
         console.error("Error fetching comments:", error);
-        alert(error.response?.data?.message || "Failed to fetch comments");
+        showToast(
+          error.response?.data?.message || "Failed to fetch comments",
+          "error",
+        );
       } finally {
         setLoading(false);
       }
@@ -37,7 +44,7 @@ export default function CommentPost({ postId }) {
     }
 
     if (!commentContent.trim()) {
-      alert("Comment cannot be empty!");
+      showToast("Comment cannot be empty!", "error");
       return;
     }
 
@@ -48,29 +55,35 @@ export default function CommentPost({ postId }) {
       const newComment = response.data.comment;
       setComments([...comments, newComment]);
       setCommentContent(""); // Clear input
+      showToast("Comment posted!", "comment");
     } catch (error) {
       console.error("Error creating comment:", error);
-      alert(error.response?.data?.message || "Failed to post comment");
+      showToast(
+        error.response?.data?.message || "Failed to post comment",
+        "error",
+      );
     }
   };
 
   // Handle comment deletion
-  const handleDeleteComment = async (commentId) => {
-    if (!window.confirm("Are you sure you want to delete this comment?")) {
-      return;
-    }
+  const handleDeleteComment = (commentId) => {
+    setDeleteTarget(commentId);
+  };
+
+  const confirmDeleteComment = async () => {
+    const commentId = deleteTarget;
+    setDeleteTarget(null);
 
     try {
       await commentsAPI.deleteComment(postId, commentId);
-
-      // Remove the comment from the list
       setComments(comments.filter((comment) => comment.id !== commentId));
-
-      // Show success alert
-      alert("Comment deleted successfully!");
+      showToast("Comment deleted!", "delete");
     } catch (error) {
       console.error("Error deleting comment:", error);
-      alert(error.response?.data?.message || "Failed to delete comment");
+      showToast(
+        error.response?.data?.message || "Failed to delete comment",
+        "error",
+      );
     }
   };
 
@@ -122,7 +135,7 @@ export default function CommentPost({ postId }) {
         >
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
-              <div className="w-10 h-10 rounded-lg overflow-hidden">
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg overflow-hidden">
                 <img
                   src={
                     comment.user_profile_picture ||
@@ -156,6 +169,19 @@ export default function CommentPost({ postId }) {
           </div>
         </div>
       ))}
+
+      <ConfirmModal
+        show={!!deleteTarget}
+        title="Delete Comment"
+        message="Are you sure you want to delete this comment?"
+        icon="fa-trash"
+        iconColor="text-red-400"
+        confirmText="Delete"
+        cancelText="Cancel"
+        confirmColor="bg-red-600 hover:bg-red-500"
+        onConfirm={confirmDeleteComment}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

@@ -25,7 +25,7 @@ export default function MainLayout({ children, leftSlot }) {
         </div>
 
         {/* Right sidebar */}
-        <div className="max-md:block max-md:h-full max-lg:w-16 w-1/6">
+        <div className="max-md:block max-lg:w-16 w-1/6 sticky top-0 h-screen">
           <Sidebar />
         </div>
       </div>

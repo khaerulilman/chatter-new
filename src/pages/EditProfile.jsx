@@ -3,10 +3,14 @@ import { useAuth } from "../context/AuthContext";
 import { useState, useEffect, useRef } from "react";
 import { usersAPI } from "../api/api";
 import ImageCropModal from "../components/ImageCropModal";
+import ConfirmModal from "../components/ConfirmModal";
+import { useToast } from "../components/Toast";
 
 export default function EditProfile() {
   const { user, setUser, logout } = useAuth();
   const navigate = useNavigate();
+  const showToast = useToast();
+  const [showConfirm, setShowConfirm] = useState(false);
   const [id, setId] = useState(user?.id || "");
   const [name, setName] = useState(user?.name || "");
   const [username, setUsername] = useState(user?.username || "");
@@ -63,6 +67,17 @@ export default function EditProfile() {
     console.log("Logging out...");
     logout();
     navigate("/", { replace: true });
+  };
+
+  const handleSaveClick = (e) => {
+    e.preventDefault();
+    setShowConfirm(true);
+  };
+
+  const handleConfirmSave = () => {
+    setShowConfirm(false);
+    // Trigger the real form submit
+    document.getElementById("edit-profile-form").requestSubmit();
   };
 
   // Open file picker → then open crop modal
@@ -156,7 +171,7 @@ export default function EditProfile() {
         created_at: freshUserData.created_at,
       });
 
-      alert("Profile updated successfully!");
+      showToast("Profile updated successfully!", "profile");
     } catch (error) {
       console.error("Error updating profile:", error);
       setError(
@@ -271,7 +286,11 @@ export default function EditProfile() {
             <h2 className="text-white text-2xl mb-4">Edit Profile</h2>
             {error && <p className="text-red-500">{error}</p>}{" "}
             {/* Display error message */}
-            <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+            <form
+              id="edit-profile-form"
+              className="flex flex-col gap-4"
+              onSubmit={handleSubmit}
+            >
               {/* Display Name */}
               <div>
                 <label className="text-gray-300">Display Name</label>
@@ -334,7 +353,8 @@ export default function EditProfile() {
 
               {/* Submit Button */}
               <button
-                type="submit"
+                type="button"
+                onClick={handleSaveClick}
                 className="mt-4 bg-blue-600 text-white p-2 rounded hover:bg-blue-500"
               >
                 Save Changes
@@ -343,6 +363,19 @@ export default function EditProfile() {
           </div>
         </div>
       </section>
+
+      <ConfirmModal
+        show={showConfirm}
+        title="Update Profile"
+        message="Are you sure you want to save these changes to your profile?"
+        icon="fa-user-pen"
+        iconColor="text-teal-400"
+        confirmText="Save Changes"
+        cancelText="Cancel"
+        confirmColor="bg-teal-600 hover:bg-teal-500"
+        onConfirm={handleConfirmSave}
+        onCancel={() => setShowConfirm(false)}
+      />
     </>
   );
 }

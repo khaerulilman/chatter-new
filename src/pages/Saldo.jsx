@@ -4,6 +4,7 @@ import MainLayout from "../components/MainLayout";
 import { useAuth } from "../context/AuthContext";
 import { walletAPI, tipsAPI } from "../api/api";
 import Loading from "../components/Loading";
+import { useToast } from "../components/Toast";
 
 // ─── Top-up amount options ───────────────────────────────────────
 const TOPUP_OPTIONS = [
@@ -330,6 +331,7 @@ function TopUpModal({ onClose, onSuccess }) {
 export default function Saldo() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const showToast = useToast();
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState([]);
   const [tipsReceived, setTipsReceived] = useState([]);
@@ -579,7 +581,13 @@ export default function Saldo() {
 
       {/* Top Up Modal */}
       {showTopUp && (
-        <TopUpModal onClose={() => setShowTopUp(false)} onSuccess={fetchData} />
+        <TopUpModal
+          onClose={() => setShowTopUp(false)}
+          onSuccess={() => {
+            fetchData();
+            showToast("Top up successful!", "topup");
+          }}
+        />
       )}
     </MainLayout>
   );
