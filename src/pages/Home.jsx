@@ -19,10 +19,6 @@ export default function Home() {
     }
   }, [rawTab, activeTab, setSearchParams]);
 
-  const handleShowPost = () => setSearchParams({ tab: "posts" });
-  const handleShowNews = () => setSearchParams({ tab: "news" });
-  const handleShowPeople = () => setSearchParams({ tab: "people" });
-
   return (
     <MainLayout>
       <div className="py-3 px-4 text-white flex border-b border-gray-500">
@@ -31,31 +27,27 @@ export default function Home() {
         </button>
       </div>
 
-      <div className="py-3 justify-between flex px-10 text-gray-400 border-b border-gray-500">
-        <button
-          onClick={handleShowPost}
-          className={`hover:text-white transition duration-300 ${
-            activeTab === "posts" ? "text-teal-400 underline" : ""
-          }`}
-        >
-          Posts
-        </button>
-        <button
-          onClick={handleShowPeople}
-          className={`hover:text-white transition duration-300 ${
-            activeTab === "people" ? "text-teal-400 underline" : ""
-          }`}
-        >
-          People
-        </button>
-        <button
-          onClick={handleShowNews}
-          className={`hover:text-white transition duration-300 ${
-            activeTab === "news" ? "text-teal-400 underline" : ""
-          }`}
-        >
-          News
-        </button>
+      <div className="flex border-b border-gray-500">
+        {[
+          { key: "posts", label: "Posts" },
+          { key: "people", label: "People" },
+          { key: "news", label: "News" },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setSearchParams({ tab: tab.key })}
+            className={`flex-1 py-3 text-sm font-medium transition-colors relative ${
+              activeTab === tab.key
+                ? "text-teal-400"
+                : "text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            {tab.label}
+            {activeTab === tab.key && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-400 rounded-full" />
+            )}
+          </button>
+        ))}
       </div>
 
       <div className="flex-1 overflow-auto scrollbar-hide">

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import CommentPost from "./CommentPost";
 import TipModal from "./TipModal";
+import ConfirmModal from "./ConfirmModal";
+import { useToast } from "./Toast";
 import { useAuth } from "../context/AuthContext";
 import { usePosts } from "../context/PostsContext";
 import { commentsAPI, likesAPI, postsAPI, tipsAPI } from "../api/api";
@@ -10,6 +12,7 @@ export default function CardPost({ post }) {
   const { user } = useAuth();
   const { updatePost, fetchPosts } = usePosts();
   const navigate = useNavigate();
+  const showToast = useToast();
   const [showComment, setShowComment] = useState(false);
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [likeCount, setLikeCount] = useState(post.likes || 0);
@@ -27,6 +30,7 @@ export default function CardPost({ post }) {
   const [tipLoading, setTipLoading] = useState(false);
   const [tipError, setTipError] = useState(null);
   const [tipSuccess, setTipSuccess] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     // Fetch comment count for the post
@@ -116,9 +120,9 @@ export default function CardPost({ post }) {
       });
     } catch (error) {
       console.error("Error liking post:", error);
-      alert(
-        error.response?.data?.message ||
-          "An error occurred while liking the post",
+      showToast(
+        error.response?.data?.message || "Failed to like post",
+        "error",
       );
     } finally {
       setLoading(false);
@@ -135,11 +139,12 @@ export default function CardPost({ post }) {
     try {
       const response = await postsAPI.toggleSave(post.id);
       setIsSaved(response.data.isSaved);
+      showToast(response.data.isSaved ? "Post saved!" : "Post unsaved", "save");
     } catch (error) {
       console.error("Error saving post:", error);
-      alert(
-        error.response?.data?.message ||
-          "An error occurred while saving the post",
+      showToast(
+        error.response?.data?.message || "Failed to save post",
+        "error",
       );
     } finally {
       setSaveLoading(false);
@@ -151,19 +156,19 @@ export default function CardPost({ post }) {
   };
 
   const handleDeletePost = async () => {
-    if (!window.confirm("Are you sure you want to delete this post?")) {
-      return;
-    }
+    setShowDeleteConfirm(true);
+  };
 
+  const confirmDeletePost = async () => {
+    setShowDeleteConfirm(false);
     setIsDeleting(true);
     try {
       await postsAPI.deletePost(post.id);
-      alert("Post deleted successfully!");
-      // Refresh posts after deletion
+      showToast("Post deleted successfully!", "delete");
       fetchPosts();
     } catch (error) {
       console.error("Error deleting post:", error);
-      alert(error.message || "An error occurred while deleting the post");
+      showToast(error.message || "Failed to delete post", "error");
     } finally {
       setIsDeleting(false);
     }
@@ -189,6 +194,7 @@ export default function CardPost({ post }) {
       setTipSuccess(
         `Tip Rp ${amount.toLocaleString("id-ID")} berhasil dikirim!`,
       );
+      showToast(`Tip Rp ${amount.toLocaleString("id-ID")} sent!`, "tip");
       setTipAmount("");
       setTipMessage("");
       setTimeout(() => {
@@ -306,7 +312,7 @@ export default function CardPost({ post }) {
       <div className="flex flex-col">
         <div className="flex justify-between items-center my-1 px-4 pt-4">
           <div className="flex gap-2">
-            <div className="w-12 h-12 rounded-lg overflow-hidden">
+            <div className="w-8 h-8 md:w-12 md:h-12 rounded-lg overflow-hidden">
               <img
                 src={
                   post.profile_picture ||
@@ -552,6 +558,19 @@ export default function CardPost({ post }) {
         tipSuccess={tipSuccess}
         setTipSuccess={setTipSuccess}
         handleSendTip={handleSendTip}
+      />
+
+      <ConfirmModal
+        show={showDeleteConfirm}
+        title="Delete Post"
+        message="Are you sure you want to delete this post? This action cannot be undone."
+        icon="fa-trash"
+        iconColor="text-red-400"
+        confirmText="Delete"
+        cancelText="Cancel"
+        confirmColor="bg-red-600 hover:bg-red-500"
+        onConfirm={confirmDeletePost}
+        onCancel={() => setShowDeleteConfirm(false)}
       />
     </div>
   );

@@ -5,11 +5,13 @@ import { usePosts } from "../context/PostsContext";
 import { useNavigate } from "react-router-dom";
 import NewPostProfile from "./NewPostProfile";
 import { postsAPI } from "../api/api";
+import { useToast } from "./Toast";
 
 export default function NewPost({ onClose }) {
   const { user } = useAuth();
   const { addPost } = usePosts();
   const navigate = useNavigate();
+  const showToast = useToast();
   const [fileImages, setFileImages] = useState([]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [postContent, setPostContent] = useState("");
@@ -152,7 +154,7 @@ export default function NewPost({ onClose }) {
     }
 
     if (!postContent.trim() && fileImages.length === 0) {
-      alert("Silakan tambahkan konten atau gambar untuk post Anda");
+      showToast("Please add content or an image for your post", "error");
       return;
     }
 
@@ -182,15 +184,16 @@ export default function NewPost({ onClose }) {
       });
 
       resetForm();
-      alert("Post berhasil dibuat!");
+      showToast("Post created successfully!", "post");
       onClose?.();
       navigate("/?tab=posts"); // Redirect ke tab posts
     } catch (error) {
       console.error("Error saat membuat post:", error);
-      alert(
+      showToast(
         error.response?.data?.message ||
           error.message ||
-          "Terjadi kesalahan saat membuat post",
+          "Failed to create post",
+        "error",
       );
     } finally {
       setIsSubmitting(false);
